@@ -1,0 +1,549 @@
+openapi: 3.0.3
+info:
+  title: chauff-cmn
+  version: 0.1.0
+  description: >-
+    Contrats de types partagés entre les microservices Les Chauffagistes.
+    Ce fichier est la source de vérité unique : les modèles Python et TypeScript
+    sont générés à partir d'ici, ne jamais les éditer à la main.
+paths: {}
+components:
+  schemas:
+    ApiError:
+      type: object
+      description: Forme standard d'une réponse d'erreur, commune à tous les microservices.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Code d'erreur stable et machine-readable, ex. "NOT_FOUND".
+        message:
+          type: string
+          description: Message lisible destiné aux logs ou à l'affichage debug.
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    User:
+      type: object
+      required:
+        - user_id
+        - pseudo
+      properties:
+        user_id:
+          type: string
+        pseudo:
+          type: string
+    LNChallenge:
+      type: object
+      required:
+        - lnurl
+        - k1
+      properties:
+        lnurl:
+          type: string
+        k1:
+          type: string
+
+    LNCallbackSuccessPayload:
+      type: object
+      required:
+        - status
+        - code
+      properties:
+        status:
+          type: string
+        code:
+          type: string
+
+    ExchangeCodeStatus:
+      type: string
+      enum:
+        - onboarding
+        - logged_in
+
+    ExchangeCodePayload:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ExchangeCodeStatus'
+        session_token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    SubscriptionStatus:
+      type: string
+      enum:
+        - inactive
+        - active
+        - expired
+
+    Subscription:
+      type: object
+      required:
+        - pool_address
+        - status
+        - created_at
+        - updated_at
+      properties:
+        pool_address:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PoolApiDataPayload:
+      type: object
+      properties:
+        backup_pool:
+          type: boolean
+        pool:
+          $ref: "#/components/schemas/Pool"
+        users:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/User"
+        repartition:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Repartition"
+        monthly_bests:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolBestRecord"
+        node:
+          $ref: "#/components/schemas/Node"
+      required:
+        - backup_pool
+        - pool
+        - users
+        - repartition
+        - monthly_bests
+        - node
+    PoolBestRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+        - sdiff
+        - username
+        - epoch
+      properties:
+        month:
+          type: string
+        sdiff:
+          type: string
+        username:
+          type: string
+        epoch:
+          type: string
+    Hashrates:
+      type: object
+      additionalProperties: false
+      required:
+        - hashrate1m
+        - hashrate5m
+        - hashrate1hr
+        - hashrate1d
+        - hashrate7d
+      properties:
+        hashrate1m:
+          type: string
+        hashrate5m:
+          type: string
+        hashrate1hr:
+          type: string
+        hashrate1d:
+          type: string
+        hashrate7d:
+          type: string
+    Node:
+      type: object
+      additionalProperties: false
+      required:
+        - height
+        - subversion
+        - peers
+      properties:
+        height:
+          type: number
+        subversion:
+          type: string
+        peers:
+          type: number
+    NumberHashrate:
+      type: object
+      additionalProperties: false
+      required:
+        - hashrate1m
+        - hashrate5m
+        - hashrate1hr
+        - hashrate1d
+        - hashrate7d
+      properties:
+        hashrate1m:
+          type: number
+        hashrate5m:
+          type: number
+        hashrate1hr:
+          type: number
+        hashrate1d:
+          type: number
+        hashrate7d:
+          type: number
+    Pool:
+      type: object
+      additionalProperties: false
+      required:
+        - runtime
+        - hashrate
+        - shares
+      properties:
+        runtime:
+          $ref: '#/components/schemas/PoolRuntime'
+        hashrate:
+          $ref: '#/components/schemas/PoolHashrates'
+        shares:
+          $ref: '#/components/schemas/PoolShares'
+    PoolHashrates:
+      allOf:
+        - $ref: '#/components/schemas/Hashrates'
+        - type: object
+          additionalProperties: false
+          required:
+            - hashrate15m
+            - hashrate6hr
+          properties:
+            hashrate15m:
+              type: string
+            hashrate6hr:
+              type: string
+    PoolRuntime:
+      type: object
+      additionalProperties: false
+      required:
+        - runtime
+        - lastupdate
+        - Users
+        - Workers
+        - Idle
+        - Disconnected
+      properties:
+        runtime:
+          type: number
+        lastupdate:
+          type: number
+        Users:
+          type: number
+        Workers:
+          type: number
+        Idle:
+          type: number
+        Disconnected:
+          type: number
+    PoolShares:
+      type: object
+      additionalProperties: false
+      required:
+        - diff
+        - accepted
+        - rejected
+        - bestshare
+        - SPS1m
+        - SPS5m
+        - SPS15m
+        - SPS1h
+      properties:
+        diff:
+          type: number
+        accepted:
+          type: number
+        rejected:
+          type: number
+        bestshare:
+          type: number
+        SPS1m:
+          type: number
+        SPS5m:
+          type: number
+        SPS15m:
+          type: number
+        SPS1h:
+          type: number
+    Repartition:
+      type: object
+      additionalProperties: false
+      required:
+        - shares
+        - total_vardiff
+        - weight
+        - percentage
+      properties:
+        shares:
+          type: number
+        total_vardiff:
+          type: number
+        weight:
+          type: number
+        percentage:
+          type: number
+
+    PoolUser:
+      allOf:
+        - $ref: '#/components/schemas/Hashrates'
+        - type: object
+          additionalProperties: false
+          required:
+            - lastshare
+            - workers
+            - shares
+            - bestshare
+            - bestever
+            - authorized
+            - worker
+          properties:
+            lastshare:
+              type: number
+            workers:
+              type: number
+            shares:
+              type: number
+            bestshare:
+              type: number
+            bestever:
+              type: number
+            authorized:
+              type: number
+            worker:
+              type: array
+              items:
+                $ref: '#/components/schemas/Worker'
+    Worker:
+      allOf:
+        - $ref: '#/components/schemas/Hashrates'
+        - type: object
+          additionalProperties: false
+          required:
+            - workername
+            - lastshare
+            - shares
+            - bestshare
+            - bestever
+          properties:
+            workername:
+              type: string
+            lastshare:
+              type: string
+            shares:
+              type: number
+            bestshare:
+              type: number
+            bestever:
+              type: number
+    Share:
+      type: object
+      properties:
+        workinfoid:
+          type: integer
+        clientid:
+          type: integer
+        diff:
+          type: integer
+        sdiff:
+          type: number
+          format: float
+        hash:
+          type: string
+        result:
+          type: boolean
+        errn:
+          type: integer
+        createdate:
+          type: string
+        ts:
+          type: number
+          format: float
+        workername:
+          type: string
+        username:
+          type: string
+        address:
+          type: string
+        worker:
+          type: string
+        workernameAddr:
+          type: string
+        ip:
+          type: string
+        agent:
+          type: string
+        round:
+          type: string
+        file:
+          type: string
+        rejectReason:
+          type: string
+          nullable: true
+      required:
+        - workinfoid
+        - clientid
+        - diff
+        - sdiff
+        - hash
+        - result
+        - errn
+        - createdate
+        - ts
+        - workername
+        - username
+        - address
+        - worker
+        - workernameAddr
+        - ip
+        - agent
+        - round
+        - file
+    PoolStats:
+      type: object
+      properties:
+        address:
+          type: string
+        globalStats:
+          allOf:
+            - $ref: '#/components/schemas/Hashrates'
+            - type: object
+              required:
+                - shares
+                - bestshare
+                - workers
+              properties:
+                shares:
+                  type: number
+                bestshare:
+                  type: number
+                workers:
+                  type: number
+        workers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Worker'
+      required:
+        - address
+        - globalStats
+        - workers
+    BitcoinPrice:
+      type: object
+      properties:
+        time:
+          type: number
+        USD:
+          type: number
+        EUR:
+          type: number
+        GBP:
+          type: number
+        CAD:
+          type: number
+        CHF:
+          type: number
+        AUD:
+          type: number
+        JPY:
+          type: number
+      required:
+        - time
+        - USD
+        - EUR
+        - GBP
+        - CAD
+        - CHF
+        - AUD
+    WorkerStatsHistory:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        avg_hashrate1m:
+          type: string
+        avg_hashrate5m:
+          type: string
+        avg_hashrate1h:
+          type: string
+        avg_hashrate1d:
+          type: string
+        avg_hashrate7d:
+          type: string
+        avg_weight:
+          type: string
+      required:
+        - timestamp
+        - avg_hashrate1m
+        - avg_hashrate5m
+        - avg_hashrate1h
+        - avg_hashrate1d
+        - avg_hashrate7d
+        - avg_weight
+    PoolStatsHistory:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        avg_hashrate1h:
+          type: number
+        avg_hashrate1d:
+          type: number
+      required:
+        - timestamp
+        - avg_hashrate1h
+        - avg_hashrate1d
+    WorkersWeights:
+      type: object
+      properties:
+        worker_id:
+          type: string
+        avg_weight:
+          type: string
+        timestamp:
+          type: string
+      required:
+        - worker_id
+        - avg_weight
+        - timestamp
+    PoolDistributionElement:
+      type: object
+      properties:
+        workername:
+          type: string
+        diff_sum:
+          type: number
+        part:
+          type: number
+        shares_ok:
+          type: number
+        shares_ko:
+          type: number
+      required:
+        - workername
+        - diff_sum
+        - part
+        - shares_ko
+        - shares_ok

@@ -1,0 +1,13 @@
+# Le générateur ne produit que le package pool_api (routes, bases d'API, main) dans src/.
+# Tout le reste de l'échafaudage python-fastapi est géré à la main.
+Dockerfile
+docker-compose.yaml
+pyproject.toml
+setup.cfg
+.flake8
+.gitignore
+README.md
+requirements.txt
+tests/**
+openapi.yaml
+src/pool_api/main.py

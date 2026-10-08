@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Les Chauffagistes mining pool API
+  version: 1.0.0
+  description: API Les Chauffagistes pour accéder aux métriques de minage
+tags:
+  - name: health
+  - name: pool
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /v1/pool:
+    get:
+      operationId: getPool
+      tags: [pool]
+      summary: Pool metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/Pool"
+
+components:
+  schemas: {}
