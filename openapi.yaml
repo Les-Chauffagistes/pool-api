@@ -28,6 +28,19 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/Pool"
+  /v1/node:
+    get:
+      operationId: getNode
+      tags: [pool]
+      summary: Node metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/Node"
+
 
 components:
   schemas: {}

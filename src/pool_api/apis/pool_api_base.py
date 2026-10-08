@@ -2,6 +2,7 @@
 
 from typing import ClassVar, Dict, List, Tuple  # noqa: F401
 
+from pool_api.models.node import Node
 from chauff_cmn.models import Pool
 
 
@@ -14,4 +15,10 @@ class BasePoolApi:
     async def get_pool(
         self,
     ) -> Pool:
+        ...
+
+
+    async def get_node(
+        self,
+    ) -> Node:
         ...

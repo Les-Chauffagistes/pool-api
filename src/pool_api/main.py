@@ -4,9 +4,11 @@ import pkgutil
 from contextlib import asynccontextmanager
 
 import asyncpg
+import httpx
 from fastapi import FastAPI
 
 import pool_api.apis
+from pool_api.clients.prometheus import PrometheusClient
 from pool_api.container import Container, set_container
 from pool_api.dao.PoolStat import PoolStatDAO
 from pool_api.impl.v1.services.pool import PoolService
@@ -15,11 +17,15 @@ from pool_api.impl.v1.services.pool import PoolService
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     pg = await asyncpg.create_pool(os.environ["DATABASE_URL"])
-    set_container(Container(pool_service=PoolService(PoolStatDAO(pg))))
+    prometheus_http = httpx.AsyncClient(base_url=os.environ["PROMETHEUS_URL"], timeout=5)
+    set_container(
+        Container(pool_service=PoolService(PoolStatDAO(pg), PrometheusClient(prometheus_http)))
+    )
     try:
         yield
     finally:
         set_container(None)
+        await prometheus_http.aclose()
         await pg.close()
 
 

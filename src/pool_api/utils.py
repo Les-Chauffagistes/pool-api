@@ -43,3 +43,9 @@ def from_number_to_string(value: float) -> str:
         return f"{try_round(value / 1e15)} P"
     else:
         return f"{try_round(value / 1e18)} E"
+
+
+def format_bitcoin_subversion(version: int) -> str:
+    """Convertit la version encodée de Bitcoin Core (280100) en user agent (/Satoshi:28.1.0/)."""
+    major, minor, patch = version // 10000, version // 100 % 100, version % 100
+    return f"/Satoshi:{major}.{minor}.{patch}/"

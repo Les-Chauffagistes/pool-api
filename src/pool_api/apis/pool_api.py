@@ -22,6 +22,7 @@ from fastapi import (  # noqa: F401
     status,
 )
 
+from pool_api.models.node import Node
 from chauff_cmn.models import Pool
 
 router = APIRouter()
@@ -45,3 +46,19 @@ async def get_pool(
     if not BasePoolApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BasePoolApi.subclasses[0]().get_pool()
+
+
+@router.get(
+    "/v1/node",
+    responses={
+        200: {"model": Node, "description": "OK"},
+    },
+    tags=["pool"],
+    summary="Node metrics",
+    response_model_by_alias=True,
+)
+async def get_node(
+) -> Node:
+    if not BasePoolApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BasePoolApi.subclasses[0]().get_node()

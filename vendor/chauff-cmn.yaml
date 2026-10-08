@@ -185,11 +185,11 @@ components:
         - peers
       properties:
         height:
-          type: number
+          type: integer
         subversion:
           type: string
         peers:
-          type: number
+          type: integer
     NumberHashrate:
       type: object
       additionalProperties: false
@@ -249,17 +249,17 @@ components:
         - Disconnected
       properties:
         runtime:
-          type: number
+          type: integer
         lastupdate:
-          type: number
+          type: integer
         Users:
-          type: number
+          type: integer
         Workers:
-          type: number
+          type: integer
         Idle:
-          type: number
+          type: integer
         Disconnected:
-          type: number
+          type: integer
     PoolShares:
       type: object
       additionalProperties: false
@@ -276,11 +276,11 @@ components:
         diff:
           type: number
         accepted:
-          type: number
+          type: integer
         rejected:
-          type: number
+          type: integer
         bestshare:
-          type: number
+          type: integer
         SPS1m:
           type: number
         SPS5m:
