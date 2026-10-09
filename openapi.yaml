@@ -69,3 +69,15 @@ paths:
                   error:
                     type: string
                     example: Adresse introuvable
+  /v1/top:
+    get:
+      operationId: getTop
+      tags: [pool]
+      summary: Top metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolTop"

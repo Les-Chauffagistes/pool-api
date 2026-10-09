@@ -6,6 +6,7 @@ from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
 from chauff_cmn.models import Pool
 from pool_api.models.pool_stats import PoolStats
+from pool_api.models.pool_top import PoolTop
 
 
 class BasePoolApi:
@@ -30,4 +31,10 @@ class BasePoolApi:
         self,
         user: str,
     ) -> PoolStats:
+        ...
+
+
+    async def get_top(
+        self,
+    ) -> PoolTop:
         ...

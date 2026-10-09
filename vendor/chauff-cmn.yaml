@@ -450,6 +450,46 @@ components:
         - address
         - globalStats
         - workers
+    PoolTopHashrate:
+      properties:
+        address:
+          type: string
+        workerCount:
+          type: integer
+        totalHashrate1hr:
+          type: integer
+      required:
+        - address
+        - workerCount
+        - totalHashrate1hr
+    PoolTopBestShares:
+      properties:
+        address:
+          type: string
+          description: Valeur tronquée
+          example: bc1qq...5m
+        workerCount:
+          type: integer
+        bestshare:
+          type: integer
+      required:
+        - address
+        - workerCount
+        - bestshare
+    PoolTop:
+      properties:
+        topBestShares:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolTopBestShares"
+        topHashrate:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolTopHashrate"
+      required:
+        - topBestShares
+        - topHashrate
+
     BitcoinPrice:
       type: object
       properties:

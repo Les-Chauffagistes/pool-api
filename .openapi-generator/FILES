@@ -10,5 +10,8 @@ src/pool_api/models/get_user_stats404_response.py
 src/pool_api/models/node.py
 src/pool_api/models/pool_stats.py
 src/pool_api/models/pool_stats_global_stats.py
+src/pool_api/models/pool_top.py
+src/pool_api/models/pool_top_best_shares.py
+src/pool_api/models/pool_top_hashrate.py
 src/pool_api/models/worker.py
 src/pool_api/security_api.py

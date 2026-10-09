@@ -3,6 +3,7 @@ from datetime import datetime
 
 import asyncpg
 from pydantic import BaseModel, field_validator
+from pool_api.models.pool_top import PoolTop
 
 
 class UsersDAO:
@@ -98,3 +99,33 @@ class UsersDAO:
         if row is None:
             return None
         return self.__class__.UsersAndWorkerDBModel.model_validate(dict(row))
+
+    async def get_top(self) -> PoolTop:
+        row = await self.pg.fetch(
+            """
+            WITH user_stats AS (SELECT left(address, 5) || '...' || right(address, 2) AS address,
+                                       sum(workers)                                   AS workers,
+                                       sum(hashrate1hr)                               AS hashrate,
+                                       max(bestshare)                                 AS bestshare
+                                FROM users
+                                GROUP BY address)
+            SELECT json_build_object(
+                           'topHashrate', (SELECT json_agg(t)
+                                           FROM (SELECT address, workers AS "workerCount", hashrate AS "totalHashrate1hr"
+                                                 FROM user_stats
+                                                 ORDER BY hashrate DESC
+                                                 LIMIT 10) t),
+                           'topBestShares', (SELECT json_agg(t)
+                                             FROM (SELECT address, workers AS "workerCount", bestshare
+                                                   FROM user_stats
+                                                   ORDER BY bestshare DESC
+                                                   LIMIT 10) t)
+                   ) AS result;
+            """
+        )
+        if not row:
+            return PoolTop(top_best_shares=[], top_hashrate=[])
+        result = row[0]["result"]
+        if isinstance(result, str):
+            result = json.loads(result)
+        return PoolTop.model_validate(result)

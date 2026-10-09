@@ -98,3 +98,6 @@ class PoolService:
                 "bestever": w["bestshare"],
             }
         )
+
+    async def get_top(self):
+        return await self.users_dao.get_top()
