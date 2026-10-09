@@ -8,6 +8,8 @@ from pool_api.exceptions import NotFoundError
 from pool_api.models.node import Node
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_stats_global_stats import PoolStatsGlobalStats
+from pool_api.impl.v1.services.ping_monitor import PingMonitor
+from pool_api.models.pool_ping import PoolPing
 from pool_api.models.worker import Worker
 from pool_api.utils import format_bitcoin_subversion, from_number_to_string
 
@@ -15,10 +17,12 @@ HASHRATE_KEYS = ("hashrate1m", "hashrate5m", "hashrate1hr", "hashrate1d", "hashr
 
 
 class PoolService:
-    def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, prometheus: PrometheusClient):
+    def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, prometheus: PrometheusClient,
+                 ping_monitor: PingMonitor):
         self.pool_stat_dao = pool_stat_dao
         self.users_dao = users_dao
         self.prometheus = prometheus
+        self.ping_monitor = ping_monitor
 
     async def get_primary_pool_stat(self) -> Pool:
         data = await self.pool_stat_dao.get_primary_pool_stat()
@@ -101,3 +105,6 @@ class PoolService:
 
     async def get_top(self):
         return await self.users_dao.get_top()
+
+    async def get_pings(self) -> PoolPing:
+        return self.ping_monitor.latest or await self.ping_monitor.refresh()

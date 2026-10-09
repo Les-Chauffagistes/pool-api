@@ -81,3 +81,15 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolTop"
+  /v1/pings:
+    get:
+      operationId: getPings
+      tags: [pool]
+      summary: Ping metrics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolPing"

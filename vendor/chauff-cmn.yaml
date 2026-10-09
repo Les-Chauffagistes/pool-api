@@ -289,6 +289,42 @@ components:
           type: number
         SPS1h:
           type: number
+    PoolHost:
+      properties:
+        name:
+          type: string
+        online:
+          type: boolean
+        latencyMs:
+          type: number
+        raw:
+          type: string
+      required:
+        - name
+        - online
+        - latencyMs
+        - raw
+    PoolPing:
+      properties:
+        updatedAt:
+          type: string
+          format: datetime
+        total:
+          type: integer
+        online:
+          type: integer
+        offline:
+          type: integer
+        hosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolHost"
+      required:
+        - updatedAt
+        - total
+        - offline
+        - online
+        - hosts
     Repartition:
       type: object
       additionalProperties: false

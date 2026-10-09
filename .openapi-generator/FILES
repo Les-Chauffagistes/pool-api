@@ -8,6 +8,8 @@ src/pool_api/models/__init__.py
 src/pool_api/models/extra_models.py
 src/pool_api/models/get_user_stats404_response.py
 src/pool_api/models/node.py
+src/pool_api/models/pool_host.py
+src/pool_api/models/pool_ping.py
 src/pool_api/models/pool_stats.py
 src/pool_api/models/pool_stats_global_stats.py
 src/pool_api/models/pool_top.py

@@ -25,6 +25,7 @@ from fastapi import (  # noqa: F401
 from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
 from chauff_cmn.models import Pool
+from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
 
@@ -99,3 +100,19 @@ async def get_top(
     if not BasePoolApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BasePoolApi.subclasses[0]().get_top()
+
+
+@router.get(
+    "/v1/pings",
+    responses={
+        200: {"model": PoolPing, "description": "OK"},
+    },
+    tags=["pool"],
+    summary="Ping metrics",
+    response_model_by_alias=True,
+)
+async def get_pings(
+) -> PoolPing:
+    if not BasePoolApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BasePoolApi.subclasses[0]().get_pings()

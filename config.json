@@ -1,0 +1,12 @@
+{
+  "ck_hosts": [
+    {
+      "name": "Primary",
+      "address": "82.67.176.31:3333"
+    },
+    {
+      "name": "Backup",
+      "address": "82.67.80.24:3333"
+    }
+  ]
+}

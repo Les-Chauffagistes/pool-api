@@ -1,6 +1,5 @@
 from pool_api.dao.Users import UsersDAO
 import importlib
-import os
 import pkgutil
 from contextlib import asynccontextmanager
 
@@ -14,20 +13,29 @@ from pool_api.clients.prometheus import PrometheusClient
 from pool_api.container import Container, set_container
 from pool_api.dao.PoolStat import PoolStatDAO
 from pool_api.exceptions import NotFoundError
+from pool_api.impl.v1.services.ping_monitor import PingMonitor
 from pool_api.impl.v1.services.pool import PoolService
+from settings import settings
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    pg = await asyncpg.create_pool(os.environ["DATABASE_URL"])
-    prometheus_http = httpx.AsyncClient(base_url=os.environ["PROMETHEUS_URL"], timeout=5)
+    pg = await asyncpg.create_pool(settings.database_url)
+    prometheus_http = httpx.AsyncClient(base_url=settings.prometheus_url, timeout=5)
+    ping_monitor = PingMonitor("config.json", settings.ping_interval_s)
+    await ping_monitor.start()
     set_container(
-        Container(pool_service=PoolService(PoolStatDAO(pg), UsersDAO(pg), PrometheusClient(prometheus_http)))
+        Container(
+            pool_service=PoolService(
+                PoolStatDAO(pg), UsersDAO(pg), PrometheusClient(prometheus_http), ping_monitor
+            )
+        )
     )
     try:
         yield
     finally:
         set_container(None)
+        await ping_monitor.stop()
         await prometheus_http.aclose()
         await pg.close()
 
