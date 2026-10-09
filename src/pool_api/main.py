@@ -1,3 +1,4 @@
+from pool_api.dao.Users import UsersDAO
 import importlib
 import os
 import pkgutil
@@ -5,12 +6,14 @@ from contextlib import asynccontextmanager
 
 import asyncpg
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 import pool_api.apis
 from pool_api.clients.prometheus import PrometheusClient
 from pool_api.container import Container, set_container
 from pool_api.dao.PoolStat import PoolStatDAO
+from pool_api.exceptions import NotFoundError
 from pool_api.impl.v1.services.pool import PoolService
 
 
@@ -19,7 +22,7 @@ async def lifespan(_: FastAPI):
     pg = await asyncpg.create_pool(os.environ["DATABASE_URL"])
     prometheus_http = httpx.AsyncClient(base_url=os.environ["PROMETHEUS_URL"], timeout=5)
     set_container(
-        Container(pool_service=PoolService(PoolStatDAO(pg), PrometheusClient(prometheus_http)))
+        Container(pool_service=PoolService(PoolStatDAO(pg), UsersDAO(pg), PrometheusClient(prometheus_http)))
     )
     try:
         yield
@@ -35,6 +38,12 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(NotFoundError)
+async def not_found_handler(_: Request, exc: NotFoundError):
+    return JSONResponse(status_code=404, content={"error": exc.message})
+
 
 # Un router par tag est généré dans apis/<tag>_api.py : on les inclut tous, pour qu'un nouveau tag
 # dans openapi.yaml soit pris en compte sans modifier ce fichier (ignoré par le générateur).

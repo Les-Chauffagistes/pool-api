@@ -40,7 +40,32 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/Node"
-
-
-components:
-  schemas: {}
+  /v1/stats/{user}:
+    parameters:
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getUserStats
+      tags: [pool]
+      summary: User stats
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolStats"
+        "404":
+          description: Adresse introuvable
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+                    example: Adresse introuvable

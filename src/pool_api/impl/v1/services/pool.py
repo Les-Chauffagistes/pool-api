@@ -3,13 +3,21 @@ from chauff_cmn.models import Pool, PoolRuntime
 
 from pool_api.clients.prometheus import PrometheusClient
 from pool_api.dao.PoolStat import PoolStatDAO
+from pool_api.dao.Users import UsersDAO
+from pool_api.exceptions import NotFoundError
 from pool_api.models.node import Node
+from pool_api.models.pool_stats import PoolStats
+from pool_api.models.pool_stats_global_stats import PoolStatsGlobalStats
+from pool_api.models.worker import Worker
 from pool_api.utils import format_bitcoin_subversion, from_number_to_string
+
+HASHRATE_KEYS = ("hashrate1m", "hashrate5m", "hashrate1hr", "hashrate1d", "hashrate7d")
 
 
 class PoolService:
-    def __init__(self, pool_stat_dao: PoolStatDAO, prometheus: PrometheusClient):
+    def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, prometheus: PrometheusClient):
         self.pool_stat_dao = pool_stat_dao
+        self.users_dao = users_dao
         self.prometheus = prometheus
 
     async def get_primary_pool_stat(self) -> Pool:
@@ -58,4 +66,35 @@ class PoolService:
             height=int(height),
             subversion=format_bitcoin_subversion(int(version)),
             peers=int(peers),
+        )
+
+    async def get_user_stats(self, user: str) -> PoolStats:
+        data = await self.users_dao.get_user_stat(user)
+        if data is None:
+            raise NotFoundError("Adresse introuvable")
+        global_stats = PoolStatsGlobalStats(
+            hashrate1m=from_number_to_string(data.hashrate1m),
+            hashrate5m=from_number_to_string(data.hashrate5m),
+            hashrate1hr=from_number_to_string(data.hashrate1hr),
+            hashrate1d=from_number_to_string(data.hashrate1d),
+            hashrate7d=from_number_to_string(data.hashrate7d),
+            shares=data.shares,
+            bestshare=data.bestshare,
+            workers=data.workers,
+        )
+        return PoolStats(
+            address=data.address,
+            globalStats=global_stats,
+            workers=[self._to_worker(w) for w in data.workers_details],
+        )
+
+    @staticmethod
+    def _to_worker(w: dict) -> Worker:
+        return Worker(
+            **{
+                **w,
+                **{k: from_number_to_string(w[k]) for k in HASHRATE_KEYS},
+                # bestever n'est pas enregistré en base (valeur identique à bestshare)
+                "bestever": w["bestshare"],
+            }
         )

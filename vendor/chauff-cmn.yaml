@@ -352,9 +352,9 @@ components:
             workername:
               type: string
             lastshare:
-              type: string
+              type: integer
             shares:
-              type: number
+              type: integer
             bestshare:
               type: number
             bestever:
