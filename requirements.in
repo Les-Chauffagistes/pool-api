@@ -7,3 +7,4 @@ pydantic_settings
 aiofiles
 pydantic
 redis==6.4.0
+pytest
