@@ -30,8 +30,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # config.json est lu en chemin relatif (cwd) par PingMonitor
 COPY --chown=app:app config.json ./
 COPY --chown=app:app src ./src
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod 0755 /usr/local/bin/docker-entrypoint.sh
+COPY --chown=app:app docker-entrypoint.sh ./
 
 USER app
 
@@ -40,4 +39,4 @@ EXPOSE ${SERVER_PORT:-8000}
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -fs http://localhost:${SERVER_PORT:-8000}/health || exit 1
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["sh", "docker-entrypoint.sh"]
