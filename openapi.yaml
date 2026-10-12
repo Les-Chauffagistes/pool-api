@@ -93,3 +93,25 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolPing"
+  /v1/data:
+    get:
+      operationId: getData
+      tags: [pool]
+      summary: Data metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolApiDataPayload"
+
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

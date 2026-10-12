@@ -121,7 +121,7 @@ components:
         users:
           type: object
           additionalProperties:
-            $ref: "#/components/schemas/User"
+            $ref: "#/components/schemas/PoolUser"
         repartition:
           type: object
           additionalProperties:
@@ -146,16 +146,19 @@ components:
         - month
         - sdiff
         - username
+        - workername
         - epoch
       properties:
         month:
           type: string
         sdiff:
-          type: string
+          type: number
         username:
           type: string
-        epoch:
+        workername:
           type: string
+        epoch:
+          type: number
     Hashrates:
       type: object
       additionalProperties: false
@@ -215,12 +218,12 @@ components:
       additionalProperties: false
       required:
         - runtime
-        - hashrate
+        - hashrates
         - shares
       properties:
         runtime:
           $ref: '#/components/schemas/PoolRuntime'
-        hashrate:
+        hashrates:
           $ref: '#/components/schemas/PoolHashrates'
         shares:
           $ref: '#/components/schemas/PoolShares'
@@ -354,7 +357,7 @@ components:
             - shares
             - bestshare
             - bestever
-            - authorized
+            - authorised
             - worker
           properties:
             lastshare:
@@ -367,7 +370,7 @@ components:
               type: number
             bestever:
               type: number
-            authorized:
+            authorised:
               type: number
             worker:
               type: array

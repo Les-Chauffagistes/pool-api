@@ -24,10 +24,13 @@ from fastapi import (  # noqa: F401
 
 from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
-from chauff_cmn.models import Pool
+from pool_api.models.pool import Pool
+from pool_api.models.pool_api_data_payload import PoolApiDataPayload
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
+from pool_api.models.extra_models import TokenModel  # noqa: F401
+from pool_api.security_api import get_token_bearerAuth
 
 router = APIRouter()
 
@@ -116,3 +119,22 @@ async def get_pings(
     if not BasePoolApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BasePoolApi.subclasses[0]().get_pings()
+
+
+@router.get(
+    "/v1/data",
+    responses={
+        200: {"model": PoolApiDataPayload, "description": "OK"},
+    },
+    tags=["pool"],
+    summary="Data metrics",
+    response_model_by_alias=True,
+)
+async def get_data(
+    token_bearerAuth: TokenModel = Security(
+        get_token_bearerAuth
+    ),
+) -> PoolApiDataPayload:
+    if not BasePoolApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BasePoolApi.subclasses[0]().get_data()
