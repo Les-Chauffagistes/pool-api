@@ -2,7 +2,7 @@
 
 install:
 	uv venv --allow-existing
-	uv pip install -r requirements.txt
+	uv pip install -r requirements.txt -r requirements-dev.txt
 	$(MAKE) schema
 
 # Lien vers le schema OpenAPI de chauff-cmn, requis par les $ref de openapi.yaml

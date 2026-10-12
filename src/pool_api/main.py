@@ -12,9 +12,12 @@ import pool_api.apis
 from pool_api.clients.prometheus import PrometheusClient
 from pool_api.container import Container, set_container
 from pool_api.dao.PoolStat import PoolStatDAO
+from pool_api.dao.ShareLog import ShareLogDAO
 from pool_api.exceptions import NotFoundError
+from pool_api.impl.v1.handlers import share_stream
 from pool_api.impl.v1.services.ping_monitor import PingMonitor
 from pool_api.impl.v1.services.pool import PoolService
+from pool_api.impl.v1.services.share_hub import ShareHub
 from settings import settings
 
 
@@ -24,17 +27,29 @@ async def lifespan(_: FastAPI):
     prometheus_http = httpx.AsyncClient(base_url=settings.prometheus_url, timeout=5)
     ping_monitor = PingMonitor("config.json", settings.ping_interval_s)
     await ping_monitor.start()
+    share_hub = ShareHub(
+        ShareLogDAO(pg),
+        settings.database_url,
+        poll_interval_s=settings.share_stream_poll_interval_s,
+        buffer=settings.share_stream_buffer,
+        batch=settings.share_stream_replay_batch,
+        max_clients=settings.share_stream_max_clients,
+        instance_stale_s=settings.share_stream_instance_stale_s,
+    )
+    await share_hub.start()
     set_container(
         Container(
             pool_service=PoolService(
                 PoolStatDAO(pg), UsersDAO(pg), PrometheusClient(prometheus_http), ping_monitor
-            )
+            ),
+            share_hub=share_hub,
         )
     )
     try:
         yield
     finally:
         set_container(None)
+        await share_hub.stop()
         await ping_monitor.stop()
         await prometheus_http.aclose()
         await pg.close()
@@ -58,3 +73,6 @@ async def not_found_handler(_: Request, exc: NotFoundError):
 for _, name, _ in pkgutil.iter_modules(pool_api.apis.__path__, pool_api.apis.__name__ + "."):
     if not name.endswith("_base"):
         app.include_router(importlib.import_module(name).router)
+
+# Le générateur ne sait pas déclarer de route WebSocket: branchée ici, documentée dans openapi.yaml (x-websocket-routes).
+app.include_router(share_stream.router)
