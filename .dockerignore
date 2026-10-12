@@ -1,0 +1,26 @@
+# Secrets locaux : ne jamais les envoyer dans le contexte de build
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.idea
+.pytest_cache
+.openapi-generator
+.openapi-generator-ignore
+**/__pycache__
+*.pyc
+venv
+.venv
+
+# Outillage de dev, inutile à l'exécution
+vendor
+tests
+scripts
+Makefile
+compose.yaml
+openapi.yaml
+sonar-project.properties
+Dockerfile
+.dockerignore
