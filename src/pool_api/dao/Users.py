@@ -101,7 +101,7 @@ class UsersDAO:
     async def get_top(self) -> PoolTop:
         row = await self.pg.fetch(
             """
-            WITH user_stats AS (SELECT left(address, 5) || '...' || right(address, 2) AS address,
+            WITH user_stats AS (SELECT left(address, 5) || '…' || right(address, 2) AS address,
                                        sum(workers)                                   AS workers,
                                        sum(hashrate1hr)                               AS hashrate,
                                        max(bestshare)                                 AS bestshare

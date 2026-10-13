@@ -1,3 +1,4 @@
+from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
 import logging
 import time
 
@@ -5,6 +6,7 @@ from pool_api.clients.prometheus import PrometheusClient
 from pool_api.clients.redis import RedisClient
 from pool_api.dao.PoolStat import PoolStatDAO
 from pool_api.dao.Users import UsersDAO
+from pool_api.dao.MonthlyBests import MonthlyBestsDAO
 from pool_api.exceptions import NotFoundError
 from pool_api.models.node import Node
 from pool_api.models.pool import Pool
@@ -28,10 +30,11 @@ logger = logging.getLogger(__name__)
 
 
 class PoolService:
-    def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, prometheus: PrometheusClient,
-                 ping_monitor: PingMonitor, redis: RedisClient):
+    def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, monthly_bests_dao: MonthlyBestsDAO,
+                 prometheus: PrometheusClient, ping_monitor: PingMonitor, redis: RedisClient):
         self.pool_stat_dao = pool_stat_dao
         self.users_dao = users_dao
+        self.monthly_bests_dao = monthly_bests_dao
         self.prometheus = prometheus
         self.ping_monitor = ping_monitor
         self.redis = redis
@@ -167,3 +170,7 @@ class PoolService:
         except Exception:
             logger.warning("Écriture du cache Redis impossible", exc_info=True)
         return data
+
+    async def get_monthly_bests(self) -> list[PoolPrivateBestRecord]:
+        rows = await self.monthly_bests_dao.get_monthly_bests()
+        return [PoolPrivateBestRecord(**row) for row in rows]

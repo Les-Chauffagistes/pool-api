@@ -7,6 +7,7 @@ from pool_api.models.node import Node
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
 from pool_api.models.pool_api_data_payload import PoolApiDataPayload
+from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
 
 
 class PoolApi(BasePoolApi):
@@ -38,3 +39,8 @@ class PoolApi(BasePoolApi):
         self,
     ) -> PoolApiDataPayload:
         return await get_container().pool_service.get_data()
+
+    async def get_monthly_bests(
+        self,
+    ) -> list[PoolPrivateBestRecord]:
+        return await get_container().pool_service.get_monthly_bests()

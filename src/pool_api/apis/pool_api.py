@@ -22,11 +22,13 @@ from fastapi import (  # noqa: F401
     status,
 )
 
+from typing import List
 from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
 from pool_api.models.pool import Pool
 from pool_api.models.pool_api_data_payload import PoolApiDataPayload
 from pool_api.models.pool_ping import PoolPing
+from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
 from pool_api.models.extra_models import TokenModel  # noqa: F401
@@ -138,3 +140,19 @@ async def get_data(
     if not BasePoolApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BasePoolApi.subclasses[0]().get_data()
+
+
+@router.get(
+    "/v1/monthlyBests",
+    responses={
+        200: {"model": List[PoolPrivateBestRecord], "description": "OK"},
+    },
+    tags=["pool"],
+    summary="Monthly bests",
+    response_model_by_alias=True,
+)
+async def get_monthly_bests(
+) -> List[PoolPrivateBestRecord]:
+    if not BasePoolApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BasePoolApi.subclasses[0]().get_monthly_bests()

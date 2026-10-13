@@ -1,3 +1,4 @@
+from pool_api.dao.MonthlyBests import MonthlyBestsDAO
 import logging
 from pool_api.dao.Users import UsersDAO
 import importlib
@@ -31,7 +32,7 @@ async def lifespan(_: FastAPI):
     ping_monitor = PingMonitor("config.json", settings.ping_interval_s)
     await ping_monitor.start()
     pool_service = PoolService(
-        PoolStatDAO(pg), UsersDAO(pg), PrometheusClient(prometheus_http), ping_monitor, redis
+        PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), PrometheusClient(prometheus_http), ping_monitor, redis
     )
     set_container(Container(pool_service=pool_service, redis=redis))
     data_refresher = DataCacheRefresher(pool_service, redis, settings.data_refresh_interval_s)

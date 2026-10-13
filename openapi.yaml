@@ -107,9 +107,20 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolApiDataPayload"
-
-
-
+  /v1/monthlyBests:
+    get:
+      operationId: getMonthlyBests
+      tags: [pool]
+      summary: Monthly bests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolPrivateBestRecord"
 components:
   securitySchemes:
     bearerAuth:

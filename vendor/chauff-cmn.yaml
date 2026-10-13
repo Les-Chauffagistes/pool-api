@@ -139,6 +139,22 @@ components:
         - repartition
         - monthly_bests
         - node
+    PoolPrivateBestRecord:
+      type: object
+      required:
+        - month
+        - sdiff
+        - address
+        - epoch
+      properties:
+        month:
+          type: string
+        sdiff:
+          type: number
+        address:
+          type: string
+        epoch:
+          type: number
     PoolBestRecord:
       type: object
       additionalProperties: false

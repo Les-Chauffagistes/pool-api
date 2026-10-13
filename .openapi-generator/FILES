@@ -15,6 +15,7 @@ src/pool_api/models/pool_best_record.py
 src/pool_api/models/pool_hashrates.py
 src/pool_api/models/pool_host.py
 src/pool_api/models/pool_ping.py
+src/pool_api/models/pool_private_best_record.py
 src/pool_api/models/pool_runtime.py
 src/pool_api/models/pool_shares.py
 src/pool_api/models/pool_stats.py
