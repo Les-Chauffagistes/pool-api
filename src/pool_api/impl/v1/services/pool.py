@@ -40,7 +40,7 @@ class PoolService:
         data = await self.pool_stat_dao.get_primary_pool_stat()
         runtime = PoolRuntime(
             runtime=data.runtime_s,
-            lastupdate=data.updated_at.timestamp(),
+            lastupdate=int(data.updated_at.timestamp()),
             Users=data.users,
             Workers=data.workers,
             Idle=data.idle,
