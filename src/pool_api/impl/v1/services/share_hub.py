@@ -56,10 +56,30 @@ def watermark_event(watermark: datetime) -> str:
     return json.dumps({"type": "watermark", "watermark": watermark.isoformat()})
 
 
+class ShareFilter:
+    """Filtre un flux de shares par address (username, sensible à la casse: base58) et/ou workername (insensible).
+
+    Un critère à None ne contraint rien; avec les deux, les deux doivent correspondre. Un share
+    sans username/workername (parse_error) ne correspond à aucun critère renseigné.
+    """
+
+    def __init__(self, address: str | None = None, workername: str | None = None):
+        self.address = address
+        self.workername = workername.casefold() if workername is not None else None
+
+    def matches(self, row: ShareLogRow) -> bool:
+        if self.address is not None and (row.username is None or row.username != self.address):
+            return False
+        if self.workername is not None and (row.workername is None or row.workername.casefold() != self.workername):
+            return False
+        return True
+
+
 class Subscriber:
     """File bornée d'un client: (curseur, texte JSON); curseur None pour les événements sans seq."""
 
-    def __init__(self, buffer: int):
+    def __init__(self, buffer: int, share_filter: ShareFilter | None = None):
+        self.filter = share_filter or ShareFilter()
         self.queue: asyncio.Queue[tuple[Cursor | None, str]] = asyncio.Queue(buffer)
         self.live = False  # tant qu'il rejoue depuis la base, le hub ne lui pousse rien
         self.overflow = False
@@ -118,10 +138,10 @@ class ShareHub:
         await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks = []
 
-    def subscribe(self) -> Subscriber:
+    def subscribe(self, share_filter: ShareFilter | None = None) -> Subscriber:
         if len(self._subs) >= self.max_clients:
             raise TooManyClients
-        sub = Subscriber(self.buffer)
+        sub = Subscriber(self.buffer, share_filter)
         self._subs.add(sub)
         return sub
 
@@ -133,10 +153,13 @@ class ShareHub:
         sub.live = True
         return self.position, self.watermark
 
-    def _broadcast(self, cursor: Cursor | None, text: str) -> None:
+    def _broadcast(self, cursor: Cursor | None, text: str, row: ShareLogRow | None = None) -> None:
+        """`row` est le share porté par `text`; None pour les événements qui vont à tous (watermark)."""
         for sub in self._subs:
             if not sub.live:
                 continue
+            if row is not None and not sub.filter.matches(row):
+                continue  # filtré ici: ni file, ni envoi, et le buffer du client n'est pas consommé
             try:
                 sub.queue.put_nowait((cursor, text))
             except asyncio.QueueFull:
@@ -150,7 +173,7 @@ class ShareHub:
         while True:
             rows = await self.dao.fetch_after(self.position, self.batch)
             for row in rows:
-                self._broadcast(row.cursor, share_event(row))
+                self._broadcast(row.cursor, share_event(row), row)
                 self.position = row.cursor
             if len(rows) < self.batch:
                 break

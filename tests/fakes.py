@@ -7,7 +7,13 @@ from pool_api.dao.ShareLog import Cursor, ShareLogRow
 T0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
-def make_row(seq: int, epoch: int = 1, instance: str = "ckpool01") -> ShareLogRow:
+def make_row(
+    seq: int,
+    epoch: int = 1,
+    instance: str = "ckpool01",
+    username: str | None = "bc1quser",
+    workername: str | None = "rig1",
+) -> ShareLogRow:
     return ShareLogRow(
         epoch=epoch,
         seq=seq,
@@ -16,8 +22,8 @@ def make_row(seq: int, epoch: int = 1, instance: str = "ckpool01") -> ShareLogRo
         path=f"0000abcd/{instance}.sharelog",
         byte_offset=seq * 100,
         workinfoid=7,
-        username="bc1quser",
-        workername="rig1",
+        username=username,
+        workername=workername,
         diff=1.0,
         sdiff=2.5,
         result=True,

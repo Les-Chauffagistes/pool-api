@@ -5,7 +5,7 @@ import pytest
 from fakes import T0, FakeConnector, FakeDAO, FakeWS, make_row
 
 from pool_api.impl.v1.handlers.share_stream import serve
-from pool_api.impl.v1.services.share_hub import ShareHub, parse_cursor
+from pool_api.impl.v1.services.share_hub import ShareFilter, ShareHub, parse_cursor
 
 
 async def new_hub(dao: FakeDAO, **kwargs) -> ShareHub:
@@ -324,3 +324,68 @@ async def test_polling_delivers_without_any_notify():
         ws.disconnect()
         await asyncio.wait_for(task, 5)
         await hub.stop()
+
+
+def mixed_rows() -> list:
+    return [
+        make_row(1, username="bc1qAlice", workername="rig1"),
+        make_row(2, username="bc1qbob", workername="rig1"),
+        make_row(3, username="bc1qalice", workername="RIG2"),
+        make_row(4, username=None, workername=None),  # parse_error
+        make_row(5, username="bc1qalice", workername="rig1"),
+    ]
+
+
+@pytest.mark.parametrize(
+    "share_filter, expected",
+    [
+        (ShareFilter(address="bc1qalice"), [3, 5]),  # sensible à la casse: bc1qAlice (seq 1) exclu
+        (ShareFilter(address="BC1QALICE"), []),
+        (ShareFilter(workername="Rig1"), [1, 2, 5]),
+        (ShareFilter(address="bc1qalice", workername="rig2"), [3]),
+        (ShareFilter(address="inconnu"), []),
+        (ShareFilter(), [1, 2, 3, 4, 5]),
+    ],
+)
+async def test_filter_applies_to_replay_and_live(share_filter, expected):
+    dao = FakeDAO(mixed_rows())
+    hub = await new_hub(dao)
+    ws = FakeWS()
+    task = run(hub, ws, (1, 0), share_filter=share_filter)
+    await ws.wait_for(lambda: "hello" in ws.types())
+
+    dao.add(
+        make_row(6, username="BC1QALICE", workername="rig1"),
+        make_row(7, username="bc1qbob", workername="rig2"),
+    )
+    await hub.pump()
+    live = [s for s in (6, 7) if share_filter.matches(dao.rows[s - 1])]  # seq 6: BC1QALICE, 7: bc1qbob
+    await ws.wait_for(lambda: ws.seqs() == expected + live)
+    await stop(task, ws)
+
+
+async def test_filtered_client_does_not_consume_buffer_with_other_shares():
+    dao = FakeDAO([make_row(1)])
+    hub = await new_hub(dao, buffer=3)
+    ws = FakeWS()
+    task = run(hub, ws, None, share_filter=ShareFilter(address="bc1qalice"))
+    await ws.wait_for(lambda: ws.types() == ["hello"])
+    ws.gate.clear()
+    for seq in range(2, 12):  # 10 shares d'un autre user: le buffer de 3 ne doit pas déborder
+        dao.add(make_row(seq, username="bc1qbob"))
+    await hub.pump()
+    ws.gate.set()
+    dao.add(make_row(12, username="bc1qalice"))
+    await hub.pump()
+    await ws.wait_for(lambda: ws.seqs() == [12])
+    assert ws.closed is None
+    await stop(task, ws)
+
+
+async def test_filtered_resume_does_not_replay_skipped_shares():
+    dao = FakeDAO(mixed_rows())
+    hub = await new_hub(dao)
+    ws = FakeWS()
+    task = run(hub, ws, (1, 1), share_filter=ShareFilter(address="bc1qalice"))
+    await ws.wait_for(lambda: ws.seqs() == [3, 5])
+    await stop(task, ws)

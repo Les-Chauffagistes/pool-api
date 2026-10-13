@@ -129,6 +129,13 @@ x-websocket-routes:
       Query `from=<epoch>:<seq>` (optionnel): le serveur rejoue depuis la base les shares strictement
       postérieurs à ce curseur (ordre lexicographique epoch puis seq), puis bascule en live.
       Sans `from`, le flux démarre au présent (pas de replay). `1:0` = tout l'historique retenu.
+      Filtres (optionnels, cumulables): `address` (= `username` du share) et `workername`. Comparaison
+      exacte: `address` est sensible à la casse (adresses base58), `workername` ne l'est pas; avec les deux,
+      les deux doivent correspondre. Le filtrage est fait côté serveur,
+      y compris pendant le replay: seuls les shares correspondants sont envoyés (`hello`, `watermark`
+      et `heartbeat` restent envoyés). Un share `parse_error` (champs nuls) ne correspond à aucun filtre.
+      Une valeur vide est refusée (4400). Le curseur de reprise reste valable avec le même filtre.
+
       Le curseur de reprise est (epoch, seq) du dernier share reçu. Livraison au moins une fois: après
       reprise ou changement d'epoch (failover Postgres) un share peut être renvoyé; dédupliquer sur `share_id`.
 
@@ -143,7 +150,7 @@ x-websocket-routes:
       - `heartbeat`: toutes les ~15 s.
 
       Codes de fermeture:
-      - 4400 curseur invalide (format ou epoch inconnue)
+      - 4400 paramètre invalide (curseur: format ou epoch inconnue; address/workername: vide)
       - 4408 client trop lent (buffer borné plein): se reconnecter avec le dernier curseur reçu
       - 4410 curseur hors rétention (plus ancien que le plus ancien seq disponible; équivalent d'un 410): repartir sans `from`
       - 1013 trop de clients connectés
@@ -155,3 +162,19 @@ x-websocket-routes:
           type: string
           pattern: '^\d+:\d+$'
           example: "1:123456"
+      - name: address
+        in: query
+        required: false
+        description: Ne diffuse que les shares de ce username (sensible à la casse).
+        schema:
+          type: string
+          minLength: 1
+          example: "bc1quser"
+      - name: workername
+        in: query
+        required: false
+        description: Ne diffuse que les shares de ce worker (insensible à la casse).
+        schema:
+          type: string
+          minLength: 1
+          example: "rig1"

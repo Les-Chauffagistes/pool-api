@@ -1,10 +1,10 @@
-"""Flux WebSocket des shares: GET /v1/shares/stream[?from=<epoch>:<seq>].
+"""Flux WebSocket des shares: GET /v1/shares/stream[?from=<epoch>:<seq>][&address=<username>][&workername=<nom>].
 
 Route branchée à la main (le générateur ne sait pas déclarer de WebSocket): documentée dans
 openapi.yaml sous x-websocket-routes, incluse dans main.py.
 
 Codes de fermeture:
-  4400 curseur invalide (format, ou epoch inconnue)
+  4400 paramètre invalide (curseur: format ou epoch inconnue; address/workername: vide)
   4408 client trop lent (buffer plein ou envoi bloqué): se reconnecter avec le dernier curseur reçu
   4410 curseur hors rétention: l'historique demandé n'existe plus, repartir sans `from`
   1013 trop de clients connectés
@@ -21,6 +21,7 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from pool_api.container import get_container
 from pool_api.dao.ShareLog import Cursor
 from pool_api.impl.v1.services.share_hub import (
+    ShareFilter,
     ShareHub,
     Subscriber,
     TooManyClients,
@@ -80,7 +81,9 @@ async def _replay(
             if not rows and head > cursor:
                 raise OutOfRetention
         for row in rows:
-            await _send(ws, share_event(row), send_timeout_s)
+            # le curseur avance aussi sur les shares écartés: le filtre ne crée pas de trou à reprendre
+            if sub.filter.matches(row):
+                await _send(ws, share_event(row), send_timeout_s)
             last = row.cursor
         if len(rows) == hub.batch:
             continue
@@ -144,6 +147,7 @@ async def serve(
     cursor: Cursor | None,
     heartbeat_s: float | None = None,
     send_timeout_s: float | None = None,
+    share_filter: ShareFilter | None = None,
 ) -> None:
     heartbeat_s = settings.share_stream_heartbeat_s if heartbeat_s is None else heartbeat_s
     send_timeout_s = settings.share_stream_send_timeout_s if send_timeout_s is None else send_timeout_s
@@ -152,7 +156,7 @@ async def serve(
         await ws.close(CLOSE_BAD_CURSOR, "unknown epoch")
         return
     try:
-        sub = hub.subscribe()
+        sub = hub.subscribe(share_filter)
     except TooManyClients:
         await ws.close(CLOSE_OVERLOADED, "too many clients")
         return
@@ -184,9 +188,18 @@ async def _close(ws: Socket, code: int, reason: str) -> None:
 
 
 @router.websocket("/v1/shares/stream")
-async def stream_shares(ws: WebSocket, from_: str | None = Query(None, alias="from")) -> None:
+async def stream_shares(
+    ws: WebSocket,
+    from_: str | None = Query(None, alias="from"),
+    address: str | None = Query(None),
+    workername: str | None = Query(None),
+) -> None:
     # accept avant tout close: refuser avant le handshake donnerait un 403 sans code applicatif
     await ws.accept()
+    if address == "" or workername == "":
+        # un filtre vide ouvrirait silencieusement le flux complet
+        await ws.close(CLOSE_BAD_CURSOR, "address and workername must not be empty")
+        return
     cursor = None
     if from_ is not None:
         try:
@@ -194,4 +207,4 @@ async def stream_shares(ws: WebSocket, from_: str | None = Query(None, alias="fr
         except ValueError:
             await ws.close(CLOSE_BAD_CURSOR, "invalid cursor, expected <epoch>:<seq>")
             return
-    await serve(ws, get_container().share_hub, cursor)
+    await serve(ws, get_container().share_hub, cursor, share_filter=ShareFilter(address, workername))
