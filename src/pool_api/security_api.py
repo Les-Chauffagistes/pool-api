@@ -17,4 +17,22 @@ from fastapi.security import (  # noqa: F401
 from fastapi.security.api_key import APIKeyCookie, APIKeyHeader, APIKeyQuery  # noqa: F401
 
 from pool_api.models.extra_models import TokenModel
+from pool_api.auth import verify_api_key
+
+
+bearer_auth = HTTPBearer()
+
+
+def get_token_bearerAuth(credentials: HTTPAuthorizationCredentials = Depends(bearer_auth)) -> TokenModel:
+    """
+    Check and retrieve authentication information from custom bearer token.
+
+    :param credentials Credentials provided by Authorization header
+    :type credentials: HTTPAuthorizationCredentials
+    :return: Decoded token information or None if token is invalid
+    :rtype: TokenModel | None
+    """
+
+    verify_api_key(credentials.credentials)
+    return TokenModel(sub="api-key")
 

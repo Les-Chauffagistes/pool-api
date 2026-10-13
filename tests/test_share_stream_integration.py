@@ -170,7 +170,7 @@ async def test_websocket_end_to_end(pg, postgres_url):
     """Vraie route FastAPI via uvicorn: replay, live, heartbeat et codes de fermeture."""
     await ship(pg, 3)
     hub = await make_hub(pg, postgres_url)
-    set_container(Container(pool_service=None, share_hub=hub))  # type: ignore[arg-type]
+    set_container(Container(pool_service=None, share_hub=hub, redis=None))  # type: ignore[arg-type]
     app = FastAPI()
     app.include_router(share_stream.router)
     server = uvicorn.Server(uvicorn.Config(app, port=0, log_level="warning", lifespan="off"))

@@ -11,3 +11,4 @@ requirements.txt
 tests/**
 openapi.yaml
 src/pool_api/main.py
+src/pool_api/security_api.py

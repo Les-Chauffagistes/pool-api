@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+    tags: [ "v*.*.*" ]
+  pull_request:
+
+
+jobs:
+#  test:
+#    uses: Les-Chauffagistes/deploy/.github/workflows/test.yml@8baf8639bb4552d918146286462b580f653d72db
+#    with:
+#      python-version: '3.13'
+#    secrets: inherit
+
+
+  build-push:
+    if: github.event_name == 'push'
+    #needs: test
+    uses: Les-Chauffagistes/deploy/.github/workflows/build.yml@8baf8639bb4552d918146286462b580f653d72db
+    with:
+      service-name: pool-api
+    secrets:
+      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      VERDACCIO_PASSWORD: ${{ secrets.VERDACCIO_PASSWORD }}
+      PYPISERVER_PASSWORD: ${{ secrets.PYPISERVER_PASSWORD }}
+      ORG_PAT: ${{ secrets.ORG_PAT }}

@@ -280,7 +280,7 @@ async def api(timescale, pg):
     seul NOTIFY peut réveiller le hub, sauf au démarrage."""
     hub = ShareHub(ShareLogDAO(pg), timescale[0], poll_interval_s=30, reconnect_delay_s=0.1)
     await hub.start()
-    set_container(Container(pool_service=None, share_hub=hub))  # type: ignore[arg-type]
+    set_container(Container(pool_service=None, share_hub=hub, redis=None))  # type: ignore[arg-type]
     app = FastAPI()
     app.include_router(share_stream.router)
     server = uvicorn.Server(uvicorn.Config(app, port=0, log_level="warning", lifespan="off"))

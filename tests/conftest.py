@@ -8,6 +8,7 @@ import pytest
 # settings.py exige ces variables à l'import; aucun test ne s'y connecte (les tests Postgres ont leur conteneur)
 os.environ.setdefault("DATABASE_URL", "postgresql://unused")
 os.environ.setdefault("PROMETHEUS_URL", "http://unused")
+os.environ.setdefault("API_KEY", "unused")
 
 ROOT = Path(__file__).resolve().parent.parent
 

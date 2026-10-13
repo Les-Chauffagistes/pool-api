@@ -1,11 +1,12 @@
 from pool_api.models.pool_ping import PoolPing
-from chauff_cmn.models import Pool
+from pool_api.models.pool import Pool
 
 from pool_api.apis.pool_api_base import BasePoolApi
 from pool_api.container import get_container
 from pool_api.models.node import Node
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
+from pool_api.models.pool_api_data_payload import PoolApiDataPayload
 
 
 class PoolApi(BasePoolApi):
@@ -32,3 +33,8 @@ class PoolApi(BasePoolApi):
         self,
     ) -> PoolPing:
         return await get_container().pool_service.get_pings()
+
+    async def get_data(
+        self,
+    ) -> PoolApiDataPayload:
+        return await get_container().pool_service.get_data()

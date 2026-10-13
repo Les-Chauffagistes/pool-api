@@ -1,11 +1,17 @@
-from chauff_cmn.models import PoolHashrates, PoolShares
-from chauff_cmn.models import Pool, PoolRuntime
+import logging
+import time
 
 from pool_api.clients.prometheus import PrometheusClient
+from pool_api.clients.redis import RedisClient
 from pool_api.dao.PoolStat import PoolStatDAO
 from pool_api.dao.Users import UsersDAO
 from pool_api.exceptions import NotFoundError
 from pool_api.models.node import Node
+from pool_api.models.pool import Pool
+from pool_api.models.pool_api_data_payload import PoolApiDataPayload
+from pool_api.models.pool_hashrates import PoolHashrates
+from pool_api.models.pool_runtime import PoolRuntime
+from pool_api.models.pool_shares import PoolShares
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_stats_global_stats import PoolStatsGlobalStats
 from pool_api.impl.v1.services.ping_monitor import PingMonitor
@@ -15,14 +21,20 @@ from pool_api.utils import format_bitcoin_subversion, from_number_to_string
 
 HASHRATE_KEYS = ("hashrate1m", "hashrate5m", "hashrate1hr", "hashrate1d", "hashrate7d")
 
+DATA_CACHE_KEY = "pool_api:data"
+DATA_CACHE_TTL_S = 60
+
+logger = logging.getLogger(__name__)
+
 
 class PoolService:
     def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, prometheus: PrometheusClient,
-                 ping_monitor: PingMonitor):
+                 ping_monitor: PingMonitor, redis: RedisClient):
         self.pool_stat_dao = pool_stat_dao
         self.users_dao = users_dao
         self.prometheus = prometheus
         self.ping_monitor = ping_monitor
+        self.redis = redis
 
     async def get_primary_pool_stat(self) -> Pool:
         data = await self.pool_stat_dao.get_primary_pool_stat()
@@ -108,3 +120,50 @@ class PoolService:
 
     async def get_pings(self) -> PoolPing:
         return self.ping_monitor.latest or await self.ping_monitor.refresh()
+
+    @staticmethod
+    def _format_data_hashrates(raw: dict) -> dict:
+        """Le SQL renvoie des hashrates numériques, le contrat de l'API les attend lisibles ("1.5 M")."""
+
+        def fmt(d: dict, keys) -> dict:
+            return {**d, **{k: from_number_to_string(d[k]) for k in keys if k in d}}
+
+        users = {
+            address: {**fmt(u, HASHRATE_KEYS), "worker": [fmt(w, HASHRATE_KEYS) for w in u["worker"]]}
+            for address, u in raw["users"].items()
+        }
+        pool_keys = (*HASHRATE_KEYS, "hashrate15m", "hashrate6hr")
+        return {**raw, "users": users, "pool": {**raw["pool"], "hashrates": fmt(raw["pool"]["hashrates"], pool_keys)}}
+
+    async def get_data(self) -> PoolApiDataPayload:
+        # Redis first : la requête SQL est lourde, on sert le cache tant que le TTL n'a pas expiré.
+        # Une panne Redis ne doit pas casser la route : on retombe alors sur la base.
+        start = time.perf_counter()
+        try:
+            cached = await self.redis.raw.get(DATA_CACHE_KEY)
+            if cached is not None:
+                payload = PoolApiDataPayload.from_json(cached)
+                logger.info("get_data: cache HIT (%.0f ms)", (time.perf_counter() - start) * 1000)
+                return payload
+        except Exception:
+            logger.warning("Lecture du cache Redis impossible, repli sur la base", exc_info=True)
+
+        logger.info("get_data: cache MISS, lecture en base")
+        data = await self.refresh_data()
+        logger.info("get_data: cache MISS terminé (%.0f ms)", (time.perf_counter() - start) * 1000)
+        return data
+
+    async def refresh_data(self) -> PoolApiDataPayload:
+        """Reconstruit le payload depuis la base et Prometheus, puis le met en cache (appelé aussi par le worker)."""
+        raw = self._format_data_hashrates(await self.users_dao.get_data())
+        data = PoolApiDataPayload.from_dict({
+            **raw,
+            "backup_pool": False,  # codé en dur pour le moment
+            "node": (await self.get_primary_node_stat()).to_dict(),
+        })
+
+        try:
+            await self.redis.raw.set(DATA_CACHE_KEY, data.to_json(), ex=DATA_CACHE_TTL_S)
+        except Exception:
+            logger.warning("Écriture du cache Redis impossible", exc_info=True)
+        return data

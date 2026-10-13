@@ -93,6 +93,28 @@ paths:
             application/json:
               schema:
                 $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolPing"
+  /v1/data:
+    get:
+      operationId: getData
+      tags: [pool]
+      summary: Data metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolApiDataPayload"
+
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
 
 # Routes WebSocket: le générateur ne sait pas les déclarer. Elles sont branchées à la main
 # (impl/v1/handlers/share_stream.py, incluse dans main.py) et décrites ici, sous une extension

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # évite un import circulaire : les handlers importent ce module
+    from pool_api.clients.redis import RedisClient
     from pool_api.impl.v1.services.pool import PoolService
     from pool_api.impl.v1.services.share_hub import ShareHub
 
@@ -12,6 +13,7 @@ class Container:
 
     pool_service: "PoolService"
     share_hub: "ShareHub"
+    redis: "RedisClient"
 
 
 _container: Container | None = None
