@@ -70,7 +70,7 @@ class PoolService:
 
         return Pool(
             runtime=runtime,
-            hashrate=hashrate,
+            hashrates=hashrate,
             shares=shares,
         )
 
