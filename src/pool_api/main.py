@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 import asyncpg
 import httpx
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import pool_api.apis
@@ -66,6 +67,15 @@ app = FastAPI(
     description="API Les Chauffagistes pour accéder aux métriques de minage",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+# API publique en lecture : toutes les origines sont autorisées. Pas de credentials (cookies/auth
+# HTTP), incompatibles avec le joker "*" côté navigateur.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
