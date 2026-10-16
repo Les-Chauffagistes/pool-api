@@ -118,12 +118,6 @@ async def test_get_top_masks_addresses_ranks_and_limits_to_ten(pg):
     assert top.top_best_shares[0].bestshare == 11
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: json_agg renvoie NULL sans ligne -> PoolTop reçoit None (ValidationError, 500). "
-    "Le garde `if not row` ne se déclenche jamais (fetch renvoie toujours une ligne). "
-    "Correctif : COALESCE(json_agg(t), '[]') dans la requête.",
-)
 async def test_get_top_on_empty_tables_returns_empty_lists(pg):
     top = await UsersDAO(pg).get_top()
     assert top.top_hashrate == [] and top.top_best_shares == []
