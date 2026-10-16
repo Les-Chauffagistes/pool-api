@@ -1,0 +1,6 @@
+[run]
+source = src
+omit =
+    # code généré par openapi-generator (cf. .openapi-generator-ignore)
+    src/pool_api/models/*
+    src/pool_api/apis/*

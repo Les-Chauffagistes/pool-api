@@ -31,6 +31,7 @@ jobs:
         run: |
           uv venv
           uv pip install --require-hashes --only-binary :all: -r requirements.txt
+          uv pip install -r requirements-dev.txt
         env:
           UV_EXTRA_INDEX_URL: http://${{ secrets.REGISTRY_USER }}:${{ secrets.PYPISERVER_PASSWORD }}@172.16.0.1:8081/simple/
 
