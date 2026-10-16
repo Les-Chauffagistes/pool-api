@@ -140,3 +140,66 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+
+# Routes WebSocket: le générateur ne sait pas les déclarer. Elles sont branchées à la main
+# (impl/v1/handlers/share_stream.py, incluse dans main.py) et décrites ici, sous une extension
+# racine que le générateur ignore.
+x-websocket-routes:
+  /v1/shares/stream:
+    summary: Flux des shares (WebSocket, au moins une fois, avec reprise)
+    description: |
+      Diffuse les shares de share_log. Messages serveur: JSON texte, un événement par message.
+      Le client n'envoie rien (ignoré).
+
+      Query `from=<epoch>:<seq>` (optionnel): le serveur rejoue depuis la base les shares strictement
+      postérieurs à ce curseur (ordre lexicographique epoch puis seq), puis bascule en live.
+      Sans `from`, le flux démarre au présent (pas de replay). `1:0` = tout l'historique retenu.
+      Filtres (optionnels, cumulables): `address` (= `username` du share) et `workername`. Comparaison
+      exacte: `address` est sensible à la casse (adresses base58), `workername` ne l'est pas; avec les deux,
+      les deux doivent correspondre. Le filtrage est fait côté serveur,
+      y compris pendant le replay: seuls les shares correspondants sont envoyés (`hello`, `watermark`
+      et `heartbeat` restent envoyés). Un share `parse_error` (champs nuls) ne correspond à aucun filtre.
+      Une valeur vide est refusée (4400). Le curseur de reprise reste valable avec le même filtre.
+
+      Le curseur de reprise est (epoch, seq) du dernier share reçu. Livraison au moins une fois: après
+      reprise ou changement d'epoch (failover Postgres) un share peut être renvoyé; dédupliquer sur `share_id`.
+
+      Événements (champ `type`):
+      - `hello`: `cursor` (point de départ) et `head` (dernier curseur attribué), au format `epoch:seq`.
+      - `share`: `share_id` (`instance:path:byte_offset`, clé d'idempotence), `epoch`, `seq`, `instance`,
+        `created_at`, `workinfoid`, `username`, `workername`, `diff`, `sdiff`, `result`, `parse_error`.
+        Un share illisible côté exporteur est envoyé avec `parse_error: true` et les champs nuls
+        (le seq reste ainsi continu); `raw` n'est jamais exposé.
+      - `watermark`: tout share de toute instance active avec `created_at` <= watermark a déjà été
+        envoyé. Minimum des `shipped_until` des instances ayant émis un heartbeat récemment; jamais en recul.
+      - `heartbeat`: toutes les ~15 s.
+
+      Codes de fermeture:
+      - 4400 paramètre invalide (curseur: format ou epoch inconnue; address/workername: vide)
+      - 4408 client trop lent (buffer borné plein): se reconnecter avec le dernier curseur reçu
+      - 4410 curseur hors rétention (plus ancien que le plus ancien seq disponible; équivalent d'un 410): repartir sans `from`
+      - 1013 trop de clients connectés
+    parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: '^\d+:\d+$'
+          example: "1:123456"
+      - name: address
+        in: query
+        required: false
+        description: Ne diffuse que les shares de ce username (sensible à la casse).
+        schema:
+          type: string
+          minLength: 1
+          example: "bc1quser"
+      - name: workername
+        in: query
+        required: false
+        description: Ne diffuse que les shares de ce worker (insensible à la casse).
+        schema:
+          type: string
+          minLength: 1
+          example: "rig1"
