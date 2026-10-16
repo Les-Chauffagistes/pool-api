@@ -108,12 +108,12 @@ class UsersDAO:
                                 FROM users
                                 GROUP BY address)
             SELECT json_build_object(
-                           'topHashrate', (SELECT json_agg(t)
+                           'topHashrate', (SELECT COALESCE(json_agg(t), '[]'::json)
                                            FROM (SELECT address, workers AS "workerCount", hashrate AS "totalHashrate1hr"
                                                  FROM user_stats
                                                  ORDER BY hashrate DESC
                                                  LIMIT 10) t),
-                           'topBestShares', (SELECT json_agg(t)
+                           'topBestShares', (SELECT COALESCE(json_agg(t), '[]'::json)
                                              FROM (SELECT address, workers AS "workerCount", bestshare
                                                    FROM user_stats
                                                    ORDER BY bestshare DESC

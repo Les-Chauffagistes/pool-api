@@ -3,3 +3,5 @@ pytest-asyncio
 testcontainers[postgres]
 websockets
 pyyaml
+pytest-cov
+jsonschema

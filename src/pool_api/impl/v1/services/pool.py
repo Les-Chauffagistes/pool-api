@@ -1,4 +1,4 @@
-from src.pool_api.dao.History import HistoryDAO
+from pool_api.dao.History import HistoryDAO
 from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
 import logging
