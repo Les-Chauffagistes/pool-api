@@ -180,6 +180,6 @@ class PoolService:
 
     async def get_hashrate(self) -> list[PoolHashrateRecord]:
         return [PoolHashrateRecord(
-            date = row["date"].to_isoformat(),
+            date = row["date"].isoformat(),
             hashrate = row["hashrate"]
         ) for row in await self.history_dao.get_hashrate()]
