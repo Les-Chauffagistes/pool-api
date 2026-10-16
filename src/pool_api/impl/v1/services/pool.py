@@ -1,3 +1,5 @@
+from src.pool_api.dao.History import HistoryDAO
+from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
 import logging
 import time
@@ -31,10 +33,11 @@ logger = logging.getLogger(__name__)
 
 class PoolService:
     def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, monthly_bests_dao: MonthlyBestsDAO,
-                 prometheus: PrometheusClient, ping_monitor: PingMonitor, redis: RedisClient):
+                 history_dao: HistoryDAO, prometheus: PrometheusClient, ping_monitor: PingMonitor, redis: RedisClient):
         self.pool_stat_dao = pool_stat_dao
         self.users_dao = users_dao
         self.monthly_bests_dao = monthly_bests_dao
+        self.history_dao = history_dao
         self.prometheus = prometheus
         self.ping_monitor = ping_monitor
         self.redis = redis
@@ -174,3 +177,9 @@ class PoolService:
     async def get_monthly_bests(self) -> list[PoolPrivateBestRecord]:
         rows = await self.monthly_bests_dao.get_monthly_bests()
         return [PoolPrivateBestRecord(**row) for row in rows]
+
+    async def get_hashrate(self) -> list[PoolHashrateRecord]:
+        return [PoolHashrateRecord(
+            date = row["date"].to_isoformat(),
+            hashrate = row["hashrate"]
+        ) for row in await self.history_dao.get_hashrate()]

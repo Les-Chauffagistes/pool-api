@@ -256,6 +256,17 @@ components:
               type: string
             hashrate6hr:
               type: string
+    PoolHashrateRecord:
+      type: object
+      required:
+        - date
+        - hashrate
+      properties:
+        date:
+          type: string
+          format: datetime
+        hashrate:
+          type: integer
     PoolRuntime:
       type: object
       additionalProperties: false

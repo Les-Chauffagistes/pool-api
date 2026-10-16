@@ -1,3 +1,4 @@
+from src.pool_api.dao.History import HistoryDAO
 from pool_api.dao.MonthlyBests import MonthlyBestsDAO
 import logging
 from pool_api.dao.Users import UsersDAO
@@ -27,12 +28,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     pg = await asyncpg.create_pool(settings.database_url)
+    pg_history = await asyncpg.create_pool(settings.history_database_url)
     prometheus_http = httpx.AsyncClient(base_url=settings.prometheus_url, timeout=5)
     redis = RedisClient(settings.redis_url)
     ping_monitor = PingMonitor("config.json", settings.ping_interval_s)
     await ping_monitor.start()
     pool_service = PoolService(
-        PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), PrometheusClient(prometheus_http), ping_monitor, redis
+        PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), HistoryDAO(pg_history), PrometheusClient(prometheus_http), ping_monitor, redis
     )
     set_container(Container(pool_service=pool_service, redis=redis))
     data_refresher = DataCacheRefresher(pool_service, redis, settings.data_refresh_interval_s)

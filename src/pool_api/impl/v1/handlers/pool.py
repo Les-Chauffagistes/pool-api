@@ -1,3 +1,4 @@
+from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool import Pool
 
@@ -44,3 +45,8 @@ class PoolApi(BasePoolApi):
         self,
     ) -> list[PoolPrivateBestRecord]:
         return await get_container().pool_service.get_monthly_bests()
+
+    async def get_hashrate(
+        self,
+    ) -> list[PoolHashrateRecord]:
+        return await get_container().pool_service.get_hashrate()

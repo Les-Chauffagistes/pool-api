@@ -121,6 +121,20 @@ paths:
                 type: array
                 items:
                   $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolPrivateBestRecord"
+  /v1/hashrate:
+    get:
+      operationId: getHashrate
+      tags: [pool]
+      summary: Hashrate history
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolHashrateRecord"
 components:
   securitySchemes:
     bearerAuth:
