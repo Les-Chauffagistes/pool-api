@@ -1,4 +1,4 @@
-from src.pool_api.dao.History import HistoryDAO
+from pool_api.dao.History import HistoryDAO
 from pool_api.dao.MonthlyBests import MonthlyBestsDAO
 import logging
 from pool_api.dao.Users import UsersDAO

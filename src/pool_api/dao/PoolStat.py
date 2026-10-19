@@ -16,13 +16,13 @@ class PoolStatDAO:
         workers: int
         idle: int
         disconnected: int
-        hashrate_1m: int
-        hashrate_5m: int
-        hashrate_15m: int
-        hashrate_1h: int
-        hashrate_6h: int
-        hashrate_1d: int
-        hashrate_7d: int
+        hashrate_1m: float
+        hashrate_5m: float
+        hashrate_15m: float
+        hashrate_1h: float
+        hashrate_6h: float
+        hashrate_1d: float
+        hashrate_7d: float
         diff: float
         accepted: int
         rejected: int
