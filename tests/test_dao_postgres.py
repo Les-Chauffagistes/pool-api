@@ -148,7 +148,8 @@ async def test_get_data_builds_the_full_payload(pg):
     await add_worker(pg, "ckpool01", ADDR, "rig1", h1m=100, shares=10, best=500)
     await pg.execute("INSERT INTO share_weights_hourly VALUES ('rig1', $1, 4, 30), ('rig2', $1, 1, 10)", T0)
     await pg.execute(
-        "INSERT INTO monthly_bests VALUES ('2026-01-01', 12.5, 'u1', 'w1', $1), ('2025-12-01', 3, 'u2', 'w2', $1)", T0
+        """INSERT INTO monthly_bests (month, best_diff, "user", workername, updated_at)
+           VALUES ('2026-01-01', 12.5, 'u1', 'w1', $1), ('2025-12-01', 3, 'u2', 'w2', $1)""", T0
     )
 
     data = await UsersDAO(pg).get_data()
@@ -184,6 +185,15 @@ async def test_get_primary_pool_stat_reads_the_primary_instance_only(pg):
     assert (stat.pool_instance, stat.users, stat.updated_at) == ("ckpool01", 2, T0)
 
 
+async def test_get_primary_pool_stat_accepts_fractional_double_values(pg):
+    # hashrate_* et bestshare sont des `double precision` en base : ils peuvent ne pas être entiers
+    # (ex. "1.23T" converti en flottant), ce que le modèle ne doit pas refuser.
+    await seed_pool_stat(pg, "ckpool01", hashrate_1m=1234567.5, hashrate_7d=2.5e12 + 0.25, bestshare=77.5)
+    stat = await PoolStatDAO(pg).get_primary_pool_stat()
+    assert stat.hashrate_1m == pytest.approx(1234567.5)
+    assert stat.bestshare == pytest.approx(77.5)
+
+
 async def test_get_primary_pool_stat_missing_instance(pg):
     await seed_pool_stat(pg, "ckpool02")
     # comportement actuel : dict(None) -> TypeError, donc un 500 sur /v1/pool si ckpool01 n'a pas encore écrit
@@ -196,8 +206,8 @@ async def test_get_primary_pool_stat_missing_instance(pg):
 
 async def test_monthly_bests_keeps_the_best_row_per_month(pg):
     await pg.execute(
-        """INSERT INTO monthly_bests VALUES ('2026-01-01', 5, 'low', 'w', $1), ('2026-01-01', 9, 'high', 'w', $1),
-           ('2025-12-01', 2, 'dec', 'w', $1)""",
+        """INSERT INTO monthly_bests (month, best_diff, "user", workername, updated_at) VALUES ('2026-01-01', 5, 'low', 'w', $1),
+           ('2026-01-01', 9, 'high', 'w2', $1), ('2025-12-01', 2, 'dec', 'w', $1)""",
         T0,
     )
     rows = await MonthlyBestsDAO(pg).get_monthly_bests()
