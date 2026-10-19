@@ -146,6 +146,18 @@ async def test_get_primary_pool_stat_maps_and_formats():
     assert pool.shares.accepted == 100 and pool.shares.sps1h == 0.4
 
 
+async def test_get_primary_pool_stat_formats_fractional_hashrates():
+    class Fractional(FakePoolStatDAO):
+        async def get_primary_pool_stat(self):
+            data = await super().get_primary_pool_stat()
+            return data.model_copy(update={"hashrate_1m": 1_234_567.5, "hashrate_5m": 999.5})
+
+    service = make_service()
+    service.pool_stat_dao = Fractional()
+    pool = await service.get_primary_pool_stat()
+    assert (pool.hashrates.hashrate1m, pool.hashrates.hashrate5m) == ("1.2345675 M", "999.5")
+
+
 async def test_get_primary_node_stat_converts_prometheus_values():
     prom = FakePrometheus()
     node = await make_service(prometheus=prom).get_primary_node_stat()

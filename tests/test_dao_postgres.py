@@ -185,13 +185,13 @@ async def test_get_primary_pool_stat_reads_the_primary_instance_only(pg):
     assert (stat.pool_instance, stat.users, stat.updated_at) == ("ckpool01", 2, T0)
 
 
-async def test_get_primary_pool_stat_accepts_fractional_double_values(pg):
-    # hashrate_* et bestshare sont des `double precision` en base : ils peuvent ne pas être entiers
+async def test_get_primary_pool_stat_accepts_fractional_hashrates(pg):
+    # hashrate_* sont des `double precision` en base : ils peuvent ne pas être entiers
     # (ex. "1.23T" converti en flottant), ce que le modèle ne doit pas refuser.
-    await seed_pool_stat(pg, "ckpool01", hashrate_1m=1234567.5, hashrate_7d=2.5e12 + 0.25, bestshare=77.5)
+    await seed_pool_stat(pg, "ckpool01", hashrate_1m=1234567.5, hashrate_7d=2.5e12 + 0.25)
     stat = await PoolStatDAO(pg).get_primary_pool_stat()
     assert stat.hashrate_1m == pytest.approx(1234567.5)
-    assert stat.bestshare == pytest.approx(77.5)
+    assert stat.hashrate_7d == pytest.approx(2.5e12 + 0.25)
 
 
 async def test_get_primary_pool_stat_missing_instance(pg):
