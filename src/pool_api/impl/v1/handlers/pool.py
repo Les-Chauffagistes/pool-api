@@ -1,14 +1,15 @@
+from pool_api.apis.pool_api_base import BasePoolApi
+from pool_api.container import get_container
+
 from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool import Pool
-
-from pool_api.apis.pool_api_base import BasePoolApi
-from pool_api.container import get_container
 from pool_api.models.node import Node
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_top import PoolTop
 from pool_api.models.pool_api_data_payload import PoolApiDataPayload
 from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
+from pool_api.models.pool_distribution_element import PoolDistributionElement
 
 
 class PoolApi(BasePoolApi):
@@ -16,37 +17,43 @@ class PoolApi(BasePoolApi):
         return await get_container().pool_service.get_primary_pool_stat()
 
     async def get_node(
-        self,
+            self,
     ) -> Node:
         return await get_container().pool_service.get_primary_node_stat()
 
     async def get_user_stats(
-        self,
-        user: str,
+            self,
+            user: str,
     ) -> PoolStats:
         return await get_container().pool_service.get_user_stats(user)
 
     async def get_top(
-        self,
+            self,
     ) -> PoolTop:
         return await get_container().pool_service.get_top()
 
     async def get_pings(
-        self,
+            self,
     ) -> PoolPing:
         return await get_container().pool_service.get_pings()
 
     async def get_data(
-        self,
+            self,
     ) -> PoolApiDataPayload:
         return await get_container().pool_service.get_data()
 
     async def get_monthly_bests(
-        self,
+            self,
     ) -> list[PoolPrivateBestRecord]:
         return await get_container().pool_service.get_monthly_bests()
 
     async def get_hashrate(
-        self,
+            self,
     ) -> list[PoolHashrateRecord]:
         return await get_container().pool_service.get_hashrate()
+
+    async def get_distribution(
+            self,
+            address: str
+    ) -> list[PoolDistributionElement]:
+        return await get_container().pool_service.get_distribution(address)

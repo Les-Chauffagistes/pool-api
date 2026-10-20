@@ -27,6 +27,7 @@ from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
 from pool_api.models.pool import Pool
 from pool_api.models.pool_api_data_payload import PoolApiDataPayload
+from pool_api.models.pool_distribution_element import PoolDistributionElement
 from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
@@ -173,3 +174,20 @@ async def get_hashrate(
     if not BasePoolApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BasePoolApi.subclasses[0]().get_hashrate()
+
+
+@router.get(
+    "/v1/distribution/{address}",
+    responses={
+        200: {"model": List[PoolDistributionElement], "description": "OK"},
+    },
+    tags=["pool"],
+    summary="Distribution of shares for an address",
+    response_model_by_alias=True,
+)
+async def get_distribution(
+    address: str = Path(..., description=""),
+) -> List[PoolDistributionElement]:
+    if not BasePoolApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BasePoolApi.subclasses[0]().get_distribution(address)

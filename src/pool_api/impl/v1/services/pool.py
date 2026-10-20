@@ -7,6 +7,7 @@ import time
 from pool_api.clients.prometheus import PrometheusClient
 from pool_api.clients.redis import RedisClient
 from pool_api.dao.PoolStat import PoolStatDAO
+from pool_api.dao.ShareWeight import ShareWeightDAO
 from pool_api.dao.Users import UsersDAO
 from pool_api.dao.MonthlyBests import MonthlyBestsDAO
 from pool_api.exceptions import NotFoundError
@@ -18,6 +19,7 @@ from pool_api.models.pool_runtime import PoolRuntime
 from pool_api.models.pool_shares import PoolShares
 from pool_api.models.pool_stats import PoolStats
 from pool_api.models.pool_stats_global_stats import PoolStatsGlobalStats
+from pool_api.models.pool_distribution_element import PoolDistributionElement
 from pool_api.impl.v1.services.ping_monitor import PingMonitor
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.worker import Worker
@@ -33,11 +35,13 @@ logger = logging.getLogger(__name__)
 
 class PoolService:
     def __init__(self, pool_stat_dao: PoolStatDAO, users_dao: UsersDAO, monthly_bests_dao: MonthlyBestsDAO,
-                 history_dao: HistoryDAO, prometheus: PrometheusClient, ping_monitor: PingMonitor, redis: RedisClient):
+                 history_dao: HistoryDAO, share_weight_dao: ShareWeightDAO, prometheus: PrometheusClient,
+                 ping_monitor: PingMonitor, redis: RedisClient):
         self.pool_stat_dao = pool_stat_dao
         self.users_dao = users_dao
         self.monthly_bests_dao = monthly_bests_dao
         self.history_dao = history_dao
+        self.share_weight_dao = share_weight_dao
         self.prometheus = prometheus
         self.ping_monitor = ping_monitor
         self.redis = redis
@@ -183,3 +187,7 @@ class PoolService:
             date = row["date"].isoformat(),
             hashrate = int(row["hashrate"])
         ) for row in await self.history_dao.get_hashrate()]
+
+    async def get_distribution(self, address: str) -> list[PoolDistributionElement]:
+        distribution = await self.share_weight_dao.cluster_distribution(address)
+        return [PoolDistributionElement(**row) for row in distribution]

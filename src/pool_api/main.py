@@ -1,13 +1,17 @@
 from pool_api.dao.History import HistoryDAO
 from pool_api.dao.MonthlyBests import MonthlyBestsDAO
-import logging
 from pool_api.dao.Users import UsersDAO
+from pool_api.dao.ShareWeight import ShareWeightDAO
+from pool_api.dao.PoolStat import PoolStatDAO
+from pool_api.dao.ShareLog import ShareLogDAO
+
+import logging
 import importlib
 import pkgutil
 from contextlib import asynccontextmanager
-
 import asyncpg
 import httpx
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -16,8 +20,7 @@ import pool_api.apis
 from pool_api.clients.prometheus import PrometheusClient
 from pool_api.clients.redis import RedisClient
 from pool_api.container import Container, set_container
-from pool_api.dao.PoolStat import PoolStatDAO
-from pool_api.dao.ShareLog import ShareLogDAO
+
 from pool_api.exceptions import NotFoundError
 from pool_api.impl.v1.handlers import share_stream
 from pool_api.impl.v1.services.data_cache_refresher import DataCacheRefresher
@@ -48,7 +51,8 @@ async def lifespan(_: FastAPI):
     )
     await share_hub.start()
     pool_service = PoolService(
-        PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), HistoryDAO(pg_history), PrometheusClient(prometheus_http), ping_monitor, redis
+        PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), HistoryDAO(pg_history), ShareWeightDAO(pg),
+        PrometheusClient(prometheus_http), ping_monitor, redis
     )
     set_container(Container(pool_service=pool_service, share_hub=share_hub, redis=redis))
     data_refresher = DataCacheRefresher(pool_service, redis, settings.data_refresh_interval_s)

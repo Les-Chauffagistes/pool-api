@@ -7,6 +7,7 @@ from pool_api.models.get_user_stats404_response import GetUserStats404Response
 from pool_api.models.node import Node
 from pool_api.models.pool import Pool
 from pool_api.models.pool_api_data_payload import PoolApiDataPayload
+from pool_api.models.pool_distribution_element import PoolDistributionElement
 from pool_api.models.pool_hashrate_record import PoolHashrateRecord
 from pool_api.models.pool_ping import PoolPing
 from pool_api.models.pool_private_best_record import PoolPrivateBestRecord
@@ -66,4 +67,11 @@ class BasePoolApi:
     async def get_hashrate(
         self,
     ) -> List[PoolHashrateRecord]:
+        ...
+
+
+    async def get_distribution(
+        self,
+        address: str,
+    ) -> List[PoolDistributionElement]:
         ...

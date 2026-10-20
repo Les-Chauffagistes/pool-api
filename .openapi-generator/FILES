@@ -12,6 +12,7 @@ src/pool_api/models/node.py
 src/pool_api/models/pool.py
 src/pool_api/models/pool_api_data_payload.py
 src/pool_api/models/pool_best_record.py
+src/pool_api/models/pool_distribution_element.py
 src/pool_api/models/pool_hashrate_record.py
 src/pool_api/models/pool_hashrates.py
 src/pool_api/models/pool_host.py

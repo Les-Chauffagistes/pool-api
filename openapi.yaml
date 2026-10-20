@@ -135,6 +135,26 @@ paths:
                 type: array
                 items:
                   $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolHashrateRecord"
+  /v1/distribution/{address}:
+    get:
+      operationId: getDistribution
+      summary: Distribution of shares for an address
+      tags: [pool]
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./vendor/chauff-cmn.yaml#/components/schemas/PoolDistributionElement"
 components:
   securitySchemes:
     bearerAuth:
