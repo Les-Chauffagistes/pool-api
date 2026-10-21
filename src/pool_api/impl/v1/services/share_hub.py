@@ -31,6 +31,14 @@ def parse_cursor(value: str) -> Cursor:
     return cursor
 
 
+def block_height(path: str) -> int | None:
+    """Hauteur du bloc: ckpool range les sharelogs dans `<hauteur en hex sur 8 chiffres>/<workinfoid>.sharelog`."""
+    try:
+        return int(path.split("/", 1)[0], 16)
+    except ValueError:
+        return None
+
+
 def share_event(row: ShareLogRow) -> str:
     # path et raw ne sortent pas: le path n'est utile qu'au share_id, raw n'existe que pour parse_error
     return json.dumps(
@@ -42,6 +50,7 @@ def share_event(row: ShareLogRow) -> str:
             "instance": row.pool_instance,
             "created_at": row.created_at.isoformat(),
             "workinfoid": row.workinfoid,
+            "block_height": block_height(row.path),
             "username": row.username,
             "workername": row.workername,
             "diff": row.diff,
