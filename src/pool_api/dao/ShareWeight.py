@@ -1,6 +1,6 @@
 import asyncpg
 
-from src.settings import settings
+from settings import settings
 
 
 class ShareWeightDAO:
