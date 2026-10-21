@@ -8,16 +8,29 @@ on:
 
 
 jobs:
-#  test:
-#    uses: Les-Chauffagistes/deploy/.github/workflows/test.yml@8baf8639bb4552d918146286462b580f653d72db
-#    with:
-#      python-version: '3.13'
-#    secrets: inherit
-
+  # Le test.yml partagé n'installe que requirements.txt (pas pytest-asyncio/testcontainers): même install que sonar.yml.
+  # GitHub positionne CI=true: sans Docker, les tests testcontainers échouent au lieu d'être skippés.
+  test:
+    runs-on: [ self-hosted, worker ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install --require-hashes --only-binary :all: -r requirements.txt
+          uv pip install -r requirements-dev.txt
+        env:
+          UV_EXTRA_INDEX_URL: http://${{ secrets.REGISTRY_USER }}:${{ secrets.PYPISERVER_PASSWORD }}@172.16.0.1:8081/simple/
+      - name: Run tests
+        run: uv run pytest -rs
 
   build-push:
     if: github.event_name == 'push'
-    #needs: test
+    needs: test
     uses: Les-Chauffagistes/deploy/.github/workflows/build.yml@8baf8639bb4552d918146286462b580f653d72db
     with:
       service-name: pool-api

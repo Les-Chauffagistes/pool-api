@@ -87,6 +87,15 @@ class FakeHistoryDAO:
         return [{"date": date(2026, 1, 2), "hashrate": Decimal("1234.0")}]
 
 
+class FakeShareWeightDAO:
+    def __init__(self):
+        self.calls = []
+
+    async def cluster_distribution(self, username, window_days=14):
+        self.calls.append(username)
+        return [{"workername": "rig1", "diff_sum": 30.0, "part": 0.75, "shares_ok": 4, "shares_ko": 0}]
+
+
 class FakePing:
     def __init__(self, latest=None):
         self.latest, self.refreshed = latest, 0
@@ -128,10 +137,10 @@ def raw_data():
     }
 
 
-def make_service(*, redis=None, users=None, prometheus=None, ping=None) -> PoolService:
+def make_service(*, redis=None, users=None, prometheus=None, ping=None, share_weight=None) -> PoolService:
     return PoolService(
         FakePoolStatDAO(), users or FakeUsersDAO(), FakeMonthlyDAO(), FakeHistoryDAO(),
-        prometheus or FakePrometheus(), ping or FakePing(), redis or FakeRedis(),
+        share_weight or FakeShareWeightDAO(), prometheus or FakePrometheus(), ping or FakePing(), redis or FakeRedis(),
     )
 
 
@@ -246,3 +255,10 @@ async def test_get_monthly_bests_maps_rows():
 async def test_get_hashrate_serialises_date_and_casts_to_int():
     [record] = await make_service().get_hashrate()
     assert record.var_date == "2026-01-02" and record.hashrate == 1234
+
+
+async def test_get_distribution_maps_rows_for_the_address():
+    dao = FakeShareWeightDAO()
+    result = await make_service(share_weight=dao).get_distribution("bc1q")
+    assert dao.calls == ["bc1q"]
+    assert [(e.workername, e.part, e.shares_ok) for e in result] == [("rig1", 0.75, 4)]

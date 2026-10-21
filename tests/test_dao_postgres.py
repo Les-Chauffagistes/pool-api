@@ -8,6 +8,7 @@ from pathlib import Path
 
 import asyncpg
 import pytest
+from ci import infra_unavailable
 import pytest_asyncio
 
 from pool_api.dao.History import HistoryDAO
@@ -28,7 +29,7 @@ def postgres_url():
         container = PostgresContainer("postgres:17-alpine", username="pool", password="pool", dbname="pool", driver=None)
         container.start()
     except Exception as e:  # pragma: no cover
-        pytest.skip(f"Docker/Postgres indisponible: {e}")
+        infra_unavailable(f"Docker/Postgres indisponible: {e}")
     try:
         yield f"postgresql://pool:pool@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/pool"
     finally:

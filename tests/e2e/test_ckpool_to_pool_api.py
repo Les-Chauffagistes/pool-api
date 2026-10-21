@@ -33,6 +33,7 @@ import asyncpg
 import pytest
 import pytest_asyncio
 import uvicorn
+from ci import infra_unavailable
 from fastapi import FastAPI
 from websockets.asyncio.client import connect
 
@@ -61,7 +62,7 @@ def exporter() -> Path:
         if not (root / sub).exists():
             pytest.skip(f"CKPOOL_EXPORTER_PATH={root} invalide: {sub} introuvable")
     if shutil.which("docker") is None:
-        pytest.skip("Docker absent")
+        infra_unavailable("Docker absent")
     return root
 
 
@@ -131,7 +132,7 @@ def timescale(exporter, tmp_path_factory):
         )
         container.start()
     except Exception as e:
-        pytest.skip(f"Docker/Timescale indisponible: {e}")
+        infra_unavailable(f"Docker/Timescale indisponible: {e}")
     try:
         host, port = container.get_container_host_ip(), int(container.get_exposed_port(5432))
         dsn = _wait_for_postgres(container, lambda: f"postgresql://{DB_USER}:{DB_PASSWORD}@{host}:{port}/{DB_NAME}")
