@@ -34,13 +34,15 @@ class ShareLogDAO:
         self.pg = pg
 
     async def fetch_after(self, cursor: Cursor, limit: int) -> list[ShareLogRow]:
-        # raw n'est volontairement pas lu: il n'est jamais exposé
+        # raw n'est volontairement pas lu: il n'est jamais exposé.
+        # Comparaison de tuple volontairement développée: `(epoch, seq) > ($1, $2)` n'est pas poussée
+        # vers le filtrage des blocs compressés de TimescaleDB et force la décompression des anciens chunks.
         rows = await self.pg.fetch(
             """
             SELECT epoch, seq, created_at, pool_instance, path, byte_offset, workinfoid, username,
                    workername, diff, sdiff, result, parse_error
             FROM share_log
-            WHERE (epoch, seq) > ($1, $2)
+            WHERE epoch > $1 OR (epoch = $1 AND seq > $2)
             ORDER BY epoch, seq
             LIMIT $3
             """,
