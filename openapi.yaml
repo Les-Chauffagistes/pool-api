@@ -187,7 +187,7 @@ x-websocket-routes:
       Événements (champ `type`):
       - `hello`: `cursor` (point de départ) et `head` (dernier curseur attribué), au format `epoch:seq`.
       - `share`: `share_id` (`instance:path:byte_offset`, clé d'idempotence), `epoch`, `seq`, `instance`,
-        `created_at`, `workinfoid`, `username`, `workername`, `diff`, `sdiff`, `result`, `parse_error`.
+        `created_at`, `workinfoid`, `block_height` (entier, hauteur du bloc; `null` si le path est inattendu), `username`, `workername`, `diff`, `sdiff`, `result`, `parse_error`.
         Un share illisible côté exporteur est envoyé avec `parse_error: true` et les champs nuls
         (le seq reste ainsi continu); `raw` n'est jamais exposé.
       - `watermark`: tout share de toute instance active avec `created_at` <= watermark a déjà été

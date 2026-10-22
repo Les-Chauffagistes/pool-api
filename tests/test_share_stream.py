@@ -64,6 +64,7 @@ async def test_share_event_fields_hide_internals():
         "instance": "ckpool01",
         "created_at": (T0 + timedelta(seconds=1)).isoformat(),
         "workinfoid": 7,
+        "block_height": 0xABCD,
         "username": "bc1quser",
         "workername": "rig1",
         "diff": 1.0,
