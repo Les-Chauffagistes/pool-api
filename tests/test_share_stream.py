@@ -390,3 +390,37 @@ async def test_filtered_resume_does_not_replay_skipped_shares():
     task = run(hub, ws, (1, 1), share_filter=ShareFilter(address="bc1qalice"))
     await ws.wait_for(lambda: ws.seqs() == [3, 5])
     await stop(task, ws)
+
+
+async def test_heartbeat_cursor_advances_over_shares_the_filter_drops():
+    dao = FakeDAO([make_row(1, username="bc1qother"), make_row(2, username="bc1qother")])
+    hub = await new_hub(dao)
+    ws = FakeWS()
+    task = asyncio.create_task(
+        serve(ws, hub, None, share_filter=ShareFilter(address="bc1qalice"), heartbeat_s=0.05, send_timeout_s=1)
+    )
+    await ws.wait_for(lambda: "heartbeat" in ws.types())
+    assert ws.events[-1]["cursor"] == "1:2"  # démarrage au présent
+
+    dao.add(make_row(3, username="bc1qother"), make_row(4, username="bc1qother"))
+    await hub.pump()
+    await ws.wait_for(lambda: ws.events[-1].get("cursor") == "1:4")
+    assert ws.seqs() == []  # rien ne correspondait: seul le curseur a avancé
+
+    dao.add(make_row(5, username="bc1qalice"))
+    await hub.pump()
+    await ws.wait_for(lambda: ws.events[-1].get("cursor") == "1:5")
+    assert ws.seqs() == [5]
+    await stop(task, ws)
+
+
+async def test_heartbeat_cursor_after_replay_starts_at_the_last_scanned_row():
+    dao = FakeDAO([make_row(i, username="bc1qother") for i in range(1, 4)])
+    hub = await new_hub(dao)
+    ws = FakeWS()
+    task = asyncio.create_task(
+        serve(ws, hub, (1, 0), share_filter=ShareFilter(address="bc1qalice"), heartbeat_s=0.05, send_timeout_s=1)
+    )
+    await ws.wait_for(lambda: "heartbeat" in ws.types())
+    assert ws.events[-1]["cursor"] == "1:3" and ws.seqs() == []
+    await stop(task, ws)

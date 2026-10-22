@@ -192,7 +192,10 @@ x-websocket-routes:
         (le seq reste ainsi continu); `raw` n'est jamais exposé.
       - `watermark`: tout share de toute instance active avec `created_at` <= watermark a déjà été
         envoyé. Minimum des `shipped_until` des instances ayant émis un heartbeat récemment; jamais en recul.
-      - `heartbeat`: toutes les ~15 s.
+      - `heartbeat`: toutes les ~15 s. Champ `cursor` (`epoch:seq`, présent quand aucun share n'est en attente
+        d'envoi): dernier curseur parcouru, shares écartés par le filtre compris. Tout share correspondant au filtre
+        jusqu'à ce curseur a déjà été envoyé: un client peut le persister comme curseur de reprise même s'il n'a
+        reçu aucun share (utile avec un filtre qui ne reçoit que rarement).
 
       Codes de fermeture:
       - 4400 paramètre invalide (curseur: format ou epoch inconnue; address/workername: vide)

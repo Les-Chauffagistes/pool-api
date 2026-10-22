@@ -91,6 +91,9 @@ class Subscriber:
         self.filter = share_filter or ShareFilter()
         self.queue: asyncio.Queue[tuple[Cursor | None, str]] = asyncio.Queue(buffer)
         self.live = False  # tant qu'il rejoue depuis la base, le hub ne lui pousse rien
+        # Dernier curseur parcouru par le hub pour ce client, shares écartés par le filtre compris. Avec une file
+        # vide, tout share <= scanned qui correspond au filtre a déjà été envoyé: le heartbeat peut l'annoncer.
+        self.scanned: Cursor | None = None
         self.overflow = False
 
 
@@ -160,6 +163,7 @@ class ShareHub:
     def go_live(self, sub: Subscriber) -> tuple[Cursor, datetime | None]:
         """Le hub pousse désormais à `sub` tout ce qui suit la position renvoyée, avec le watermark valable à ce point."""
         sub.live = True
+        sub.scanned = self.position
         return self.position, self.watermark
 
     def _broadcast(self, cursor: Cursor | None, text: str, row: ShareLogRow | None = None) -> None:
@@ -167,6 +171,8 @@ class ShareHub:
         for sub in self._subs:
             if not sub.live:
                 continue
+            if cursor is not None:
+                sub.scanned = cursor
             if row is not None and not sub.filter.matches(row):
                 continue  # filtré ici: ni file, ni envoi, et le buffer du client n'est pas consommé
             try:
