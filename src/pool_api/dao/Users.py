@@ -4,6 +4,7 @@ from datetime import datetime
 import asyncpg
 from pydantic import BaseModel, field_validator
 from pool_api.models.pool_top import PoolTop
+from settings import settings
 
 
 class UsersDAO:
@@ -245,7 +246,7 @@ class UsersDAO:
                     LEFT JOIN user_workers_agg uwa ON au.address = uwa.address
                  ),
 
-                -- 6. Calcul de la répartition par adresse (username) : le pourcentage de chaque worker
+                -- 6. Calcul de la répartition par adresse (username), sur les distribution_window_days derniers jours : le pourcentage de chaque worker
                 --    est relatif au total de son adresse, donc la somme globale dépasse 100 %
                 repartition_calc AS (
                     SELECT sw.workername,
@@ -254,6 +255,7 @@ class UsersDAO:
                         sum(sw.diff_sum)                                            AS weight,
                         COALESCE(sum(sw.diff_sum) / nullif(sum(sum(sw.diff_sum)) over (partition by sw.username), 0), 0) AS percentage
                     FROM share_weights_hourly sw
+                    WHERE sw.hour >= now() - make_interval(days => $1)
                     GROUP BY sw.username, sw.workername
                 ),
                 repartition_data AS (
@@ -299,7 +301,8 @@ class UsersDAO:
                 CROSS JOIN users_data u
                 CROSS JOIN repartition_data r
                 CROSS JOIN monthly_bests_data m;
-            """
+            """,
+            settings.distribution_window_days,
         )
         result = row["result"]
         return json.loads(result) if isinstance(result, str) else result

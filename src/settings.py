@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # une instance sans heartbeat depuis ce délai n'entre plus dans le watermark
     share_stream_instance_stale_s: float = 60
     data_refresh_interval_s: float = 30
+    # fenêtre (en jours) de la répartition des workers par adresse
+    distribution_window_days: int = 14
 
     model_config = {"env_file": ".env", "extra": "allow"}
 
