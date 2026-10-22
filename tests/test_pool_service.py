@@ -201,10 +201,19 @@ def test_format_data_hashrates_formats_pool_users_and_workers():
     assert out["repartition"] == raw_data()["repartition"]
 
 
+def test_format_data_repartition_converts_ratio_to_percentage():
+    raw = raw_data()
+    raw["repartition"]["rig1"]["percentage"] = 0.25
+    out = PoolService._format_data_repartition(raw)
+    assert out["repartition"]["rig1"]["percentage"] == 25
+    assert raw["repartition"]["rig1"]["percentage"] == 0.25
+
+
 async def test_refresh_data_builds_payload_and_caches_it_with_ttl():
     redis = FakeRedis()
     data = await make_service(users=FakeUsersDAO(raw=raw_data()), redis=redis).refresh_data()
     assert data.backup_pool is False
+    assert data.repartition["rig1"].percentage == 100
     assert data.node.height == 900000
     [(key, value, kw)] = redis.raw.set_calls
     assert key == DATA_CACHE_KEY and kw == {"ex": DATA_CACHE_TTL_S}

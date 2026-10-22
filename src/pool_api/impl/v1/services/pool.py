@@ -145,6 +145,15 @@ class PoolService:
         pool_keys = (*HASHRATE_KEYS, "hashrate15m", "hashrate6hr")
         return {**raw, "users": users, "pool": {**raw["pool"], "hashrates": fmt(raw["pool"]["hashrates"], pool_keys)}}
 
+    @staticmethod
+    def _format_data_repartition(raw: dict) -> dict:
+        """Le SQL (partagé avec les futures versions) renvoie un ratio 0-1, le contrat v1 attend un pourcentage 0-100."""
+        repartition = {
+            worker: {**r, "percentage": r["percentage"] * 100 if r["percentage"] is not None else None}
+            for worker, r in raw["repartition"].items()
+        }
+        return {**raw, "repartition": repartition}
+
     async def get_data(self) -> PoolApiDataPayload:
         # Redis first : la requête SQL est lourde, on sert le cache tant que le TTL n'a pas expiré.
         # Une panne Redis ne doit pas casser la route : on retombe alors sur la base.
@@ -165,7 +174,7 @@ class PoolService:
 
     async def refresh_data(self) -> PoolApiDataPayload:
         """Reconstruit le payload depuis la base et Prometheus, puis le met en cache (appelé aussi par le worker)."""
-        raw = self._format_data_hashrates(await self.users_dao.get_data())
+        raw = self._format_data_repartition(self._format_data_hashrates(await self.users_dao.get_data()))
         data = PoolApiDataPayload.from_dict({
             **raw,
             "backup_pool": False,  # codé en dur pour le moment
