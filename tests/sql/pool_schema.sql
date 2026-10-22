@@ -85,11 +85,12 @@ CREATE INDEX user_workers_address_idx ON user_workers (address, pool_instance);
 -- DEDUIT (cf. en-tête)
 CREATE TABLE share_weights_hourly
 (
+    username   text             NOT NULL,
     workername text             NOT NULL,
     hour       timestamptz      NOT NULL,
     shares     bigint           NOT NULL,
     diff_sum   double precision NOT NULL,
-    PRIMARY KEY (workername, hour)
+    PRIMARY KEY (username, workername, hour)
 );
 
 -- DEDUIT (cf. en-tête)

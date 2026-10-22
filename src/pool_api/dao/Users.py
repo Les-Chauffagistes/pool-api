@@ -245,15 +245,16 @@ class UsersDAO:
                     LEFT JOIN user_workers_agg uwa ON au.address = uwa.address
                  ),
 
-                -- 6. Calcul de la répartition globale sur tous les workers
+                -- 6. Calcul de la répartition par adresse (username) : le pourcentage de chaque worker
+                --    est relatif au total de son adresse, donc la somme globale dépasse 100 %
                 repartition_calc AS (
                     SELECT sw.workername,
                         sum(sw.shares)                                              AS shares,
                         sum(sw.diff_sum)                                            AS total_vardiff,
                         sum(sw.diff_sum)                                            AS weight,
-                        sum(sw.diff_sum) / nullif(sum(sum(sw.diff_sum)) over (), 0) AS percentage
+                        COALESCE(sum(sw.diff_sum) / nullif(sum(sum(sw.diff_sum)) over (partition by sw.username), 0), 0) AS percentage
                     FROM share_weights_hourly sw
-                    GROUP BY sw.workername
+                    GROUP BY sw.username, sw.workername
                 ),
                 repartition_data AS (
                     SELECT COALESCE(

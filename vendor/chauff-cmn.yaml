@@ -121,7 +121,7 @@ components:
         users:
           type: object
           additionalProperties:
-            $ref: "#/components/schemas/User"
+            $ref: "#/components/schemas/PoolUser"
         repartition:
           type: object
           additionalProperties:
@@ -139,6 +139,22 @@ components:
         - repartition
         - monthly_bests
         - node
+    PoolPrivateBestRecord:
+      type: object
+      required:
+        - month
+        - sdiff
+        - address
+        - epoch
+      properties:
+        month:
+          type: string
+        sdiff:
+          type: number
+        address:
+          type: string
+        epoch:
+          type: number
     PoolBestRecord:
       type: object
       additionalProperties: false
@@ -146,16 +162,19 @@ components:
         - month
         - sdiff
         - username
+        - workername
         - epoch
       properties:
         month:
           type: string
         sdiff:
-          type: string
+          type: number
         username:
           type: string
-        epoch:
+        workername:
           type: string
+        epoch:
+          type: number
     Hashrates:
       type: object
       additionalProperties: false
@@ -185,11 +204,11 @@ components:
         - peers
       properties:
         height:
-          type: number
+          type: integer
         subversion:
           type: string
         peers:
-          type: number
+          type: integer
     NumberHashrate:
       type: object
       additionalProperties: false
@@ -215,12 +234,12 @@ components:
       additionalProperties: false
       required:
         - runtime
-        - hashrate
+        - hashrates
         - shares
       properties:
         runtime:
           $ref: '#/components/schemas/PoolRuntime'
-        hashrate:
+        hashrates:
           $ref: '#/components/schemas/PoolHashrates'
         shares:
           $ref: '#/components/schemas/PoolShares'
@@ -237,6 +256,17 @@ components:
               type: string
             hashrate6hr:
               type: string
+    PoolHashrateRecord:
+      type: object
+      required:
+        - date
+        - hashrate
+      properties:
+        date:
+          type: string
+          format: datetime
+        hashrate:
+          type: integer
     PoolRuntime:
       type: object
       additionalProperties: false
@@ -249,17 +279,17 @@ components:
         - Disconnected
       properties:
         runtime:
-          type: number
+          type: integer
         lastupdate:
-          type: string
+          type: integer
         Users:
-          type: number
+          type: integer
         Workers:
-          type: number
+          type: integer
         Idle:
-          type: number
+          type: integer
         Disconnected:
-          type: number
+          type: integer
     PoolShares:
       type: object
       additionalProperties: false
@@ -276,11 +306,11 @@ components:
         diff:
           type: number
         accepted:
-          type: number
+          type: integer
         rejected:
-          type: number
+          type: integer
         bestshare:
-          type: number
+          type: integer
         SPS1m:
           type: number
         SPS5m:
@@ -289,6 +319,42 @@ components:
           type: number
         SPS1h:
           type: number
+    PoolHost:
+      properties:
+        name:
+          type: string
+        online:
+          type: boolean
+        latencyMs:
+          type: number
+        raw:
+          type: string
+      required:
+        - name
+        - online
+        - latencyMs
+        - raw
+    PoolPing:
+      properties:
+        updatedAt:
+          type: string
+          format: datetime
+        total:
+          type: integer
+        online:
+          type: integer
+        offline:
+          type: integer
+        hosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolHost"
+      required:
+        - updatedAt
+        - total
+        - offline
+        - online
+        - hosts
     Repartition:
       type: object
       additionalProperties: false
@@ -318,7 +384,7 @@ components:
             - shares
             - bestshare
             - bestever
-            - authorized
+            - authorised
             - worker
           properties:
             lastshare:
@@ -331,7 +397,7 @@ components:
               type: number
             bestever:
               type: number
-            authorized:
+            authorised:
               type: number
             worker:
               type: array
@@ -352,9 +418,9 @@ components:
             workername:
               type: string
             lastshare:
-              type: string
+              type: integer
             shares:
-              type: number
+              type: integer
             bestshare:
               type: number
             bestever:
@@ -422,3 +488,168 @@ components:
         - agent
         - round
         - file
+    PoolStats:
+      type: object
+      properties:
+        address:
+          type: string
+        globalStats:
+          allOf:
+            - $ref: '#/components/schemas/Hashrates'
+            - type: object
+              required:
+                - shares
+                - bestshare
+                - workers
+              properties:
+                shares:
+                  type: number
+                bestshare:
+                  type: number
+                workers:
+                  type: number
+        workers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Worker'
+      required:
+        - address
+        - globalStats
+        - workers
+    PoolTopHashrate:
+      properties:
+        address:
+          type: string
+        workerCount:
+          type: integer
+        totalHashrate1hr:
+          type: integer
+      required:
+        - address
+        - workerCount
+        - totalHashrate1hr
+    PoolTopBestShares:
+      properties:
+        address:
+          type: string
+          description: Valeur tronquée
+          example: bc1qq...5m
+        workerCount:
+          type: integer
+        bestshare:
+          type: integer
+      required:
+        - address
+        - workerCount
+        - bestshare
+    PoolTop:
+      properties:
+        topBestShares:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolTopBestShares"
+        topHashrate:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoolTopHashrate"
+      required:
+        - topBestShares
+        - topHashrate
+
+    BitcoinPrice:
+      type: object
+      properties:
+        time:
+          type: number
+        USD:
+          type: number
+        EUR:
+          type: number
+        GBP:
+          type: number
+        CAD:
+          type: number
+        CHF:
+          type: number
+        AUD:
+          type: number
+        JPY:
+          type: number
+      required:
+        - time
+        - USD
+        - EUR
+        - GBP
+        - CAD
+        - CHF
+        - AUD
+    WorkerStatsHistory:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        avg_hashrate1m:
+          type: string
+        avg_hashrate5m:
+          type: string
+        avg_hashrate1h:
+          type: string
+        avg_hashrate1d:
+          type: string
+        avg_hashrate7d:
+          type: string
+        avg_weight:
+          type: string
+      required:
+        - timestamp
+        - avg_hashrate1m
+        - avg_hashrate5m
+        - avg_hashrate1h
+        - avg_hashrate1d
+        - avg_hashrate7d
+        - avg_weight
+    PoolStatsHistory:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        avg_hashrate1h:
+          type: number
+        avg_hashrate1d:
+          type: number
+      required:
+        - timestamp
+        - avg_hashrate1h
+        - avg_hashrate1d
+    WorkersWeights:
+      type: object
+      properties:
+        worker_id:
+          type: string
+        avg_weight:
+          type: string
+        timestamp:
+          type: string
+      required:
+        - worker_id
+        - avg_weight
+        - timestamp
+    PoolDistributionElement:
+      type: object
+      properties:
+        workername:
+          type: string
+        diff_sum:
+          type: number
+        part:
+          type: number
+        shares_ok:
+          type: number
+        shares_ko:
+          type: number
+      required:
+        - workername
+        - diff_sum
+        - part
+        - shares_ko
+        - shares_ok

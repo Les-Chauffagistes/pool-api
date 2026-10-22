@@ -147,7 +147,7 @@ async def test_get_data_builds_the_full_payload(pg):
     await add_user(pg, "ckpool01", ADDR, h1m=100, workers=1, shares=10, best=500)
     await add_user(pg, "ckpool02", ADDR, h1m=20, workers=1, shares=2, best=600)
     await add_worker(pg, "ckpool01", ADDR, "rig1", h1m=100, shares=10, best=500)
-    await pg.execute("INSERT INTO share_weights_hourly VALUES ('rig1', $1, 4, 30), ('rig2', $1, 1, 10)", T0)
+    await pg.execute("INSERT INTO share_weights_hourly VALUES ('addr1', 'rig1', $1, 4, 30), ('addr1', 'rig2', $1, 1, 10), ('addr2', 'rig3', $1, 2, 5), ('addr3', 'rig4', $1, 1, 0)", T0)
     await pg.execute(
         """INSERT INTO monthly_bests (month, best_diff, "user", workername, updated_at)
            VALUES ('2026-01-01', 12.5, 'u1', 'w1', $1), ('2025-12-01', 3, 'u2', 'w2', $1)""", T0
@@ -165,6 +165,8 @@ async def test_get_data_builds_the_full_payload(pg):
     assert [w["workername"] for w in user["worker"]] == ["rig1"]
     assert data["repartition"]["rig1"]["percentage"] == pytest.approx(0.75)
     assert data["repartition"]["rig2"]["percentage"] == pytest.approx(0.25)
+    assert data["repartition"]["rig3"]["percentage"] == pytest.approx(1)  # relatif à son adresse, pas au cluster
+    assert data["repartition"]["rig4"]["percentage"] == 0  # total de l'adresse à 0: pas de NULL
     assert [m["month"] for m in data["monthly_bests"]] == ["2026-01", "2025-12"]  # plus récent d'abord
 
 
