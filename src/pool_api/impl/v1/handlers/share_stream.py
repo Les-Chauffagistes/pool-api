@@ -107,6 +107,10 @@ async def _live(ws: Socket, sub: Subscriber, last: Cursor, heartbeat_s: float, s
         if item is None:
             deadline = loop.time() + heartbeat_s
             heartbeat = {"type": "heartbeat", "time": datetime.now(timezone.utc).isoformat()}
+            if sub.live and sub.queue.empty() and sub.scanned is not None:
+                # Tout ce qui correspond au filtre jusqu'ici est envoyé: un client filtré peut persister ce curseur
+                # même sans share, au lieu de garder un curseur vieux de plusieurs jours (replay lourd, voire 4410).
+                heartbeat["cursor"] = format_cursor(max(last, sub.scanned))
             await _send(ws, json.dumps(heartbeat), send_timeout_s)
             continue
         cursor, text = item
