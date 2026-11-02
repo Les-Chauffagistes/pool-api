@@ -73,6 +73,11 @@ def test_health(client):
     assert r.status_code == 200
 
 
+def test_health_head(client):
+    r = client.head("/health")
+    assert r.status_code == 200
+
+
 @pytest.mark.parametrize(
     "path, expected",
     [

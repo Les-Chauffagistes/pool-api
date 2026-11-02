@@ -16,6 +16,13 @@ paths:
       responses:
         "200":
           description: OK
+    head:
+      operationId: headHealth
+      tags: [health]
+      summary: Health check (HEAD)
+      responses:
+        "200":
+          description: OK
   /v1/pool:
     get:
       operationId: getPool
