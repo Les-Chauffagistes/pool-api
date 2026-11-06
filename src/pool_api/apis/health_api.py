@@ -45,3 +45,19 @@ async def get_health(
     if not BaseHealthApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BaseHealthApi.subclasses[0]().get_health()
+
+
+@router.head(
+    "/health",
+    responses={
+        200: {"description": "OK"},
+    },
+    tags=["health"],
+    summary="Health check (HEAD)",
+    response_model_by_alias=True,
+)
+async def head_health(
+) -> None:
+    if not BaseHealthApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BaseHealthApi.subclasses[0]().head_health()

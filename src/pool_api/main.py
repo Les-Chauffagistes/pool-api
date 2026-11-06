@@ -32,10 +32,21 @@ from settings import settings
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 
 
+POOL_KWARGS = dict(
+    min_size=1,
+    max_inactive_connection_lifetime=60,
+    server_settings={
+        "tcp_keepalives_idle": "30",
+        "tcp_keepalives_interval": "10",
+        "tcp_keepalives_count": "3",
+    },
+)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    pg = await asyncpg.create_pool(settings.database_url)
-    pg_history = await asyncpg.create_pool(settings.history_database_url)
+    pg = await asyncpg.create_pool(settings.database_url, **POOL_KWARGS)
+    pg_history = await asyncpg.create_pool(settings.history_database_url, **POOL_KWARGS)
     prometheus_http = httpx.AsyncClient(base_url=settings.prometheus_url, timeout=5)
     redis = RedisClient(settings.redis_url)
     ping_monitor = PingMonitor("config.json", settings.ping_interval_s)
@@ -54,7 +65,7 @@ async def lifespan(_: FastAPI):
         PoolStatDAO(pg), UsersDAO(pg), MonthlyBestsDAO(pg), HistoryDAO(pg_history), ShareWeightDAO(pg),
         PrometheusClient(prometheus_http), ping_monitor, redis
     )
-    set_container(Container(pool_service=pool_service, share_hub=share_hub, redis=redis))
+    set_container(Container(pool_service=pool_service, share_hub=share_hub, redis=redis, pg=pg, pg_history=pg_history))
     data_refresher = DataCacheRefresher(pool_service, redis, settings.data_refresh_interval_s)
     await data_refresher.start()
     try:
@@ -67,6 +78,7 @@ async def lifespan(_: FastAPI):
         await prometheus_http.aclose()
         await redis.close()
         await pg.close()
+        await pg_history.close()
 
 
 app = FastAPI(

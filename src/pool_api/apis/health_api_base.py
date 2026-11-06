@@ -15,3 +15,9 @@ class BaseHealthApi:
         self,
     ) -> None:
         ...
+
+
+    async def head_health(
+        self,
+    ) -> None:
+        ...
