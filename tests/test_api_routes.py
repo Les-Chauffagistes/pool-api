@@ -78,6 +78,37 @@ def test_health_head(client):
     assert r.status_code == 200
 
 
+class FakePg:
+    def __init__(self, error=None):
+        self.error = error
+
+    async def fetchval(self, query):
+        if self.error:
+            raise self.error
+        return 1
+
+
+def test_health_checks_databases(service):
+    set_container(Container(pool_service=service, share_hub=None, redis=None, pg=FakePg(), pg_history=FakePg()))
+    try:
+        assert TestClient(app).get("/health").status_code == 200
+    finally:
+        set_container(None)
+
+
+@pytest.mark.parametrize("broken", ["pg", "pg_history"])
+def test_health_503_when_database_down(service, broken):
+    pools = {"pg": FakePg(), "pg_history": FakePg()}
+    pools[broken] = FakePg(ConnectionError("down"))
+    set_container(Container(pool_service=service, share_hub=None, redis=None, **pools))
+    try:
+        r = TestClient(app).get("/health")
+    finally:
+        set_container(None)
+    assert r.status_code == 503
+    assert broken in r.json()["detail"]
+
+
 @pytest.mark.parametrize(
     "path, expected",
     [
