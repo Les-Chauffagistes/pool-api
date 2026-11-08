@@ -14,7 +14,7 @@ from pool_api.models.pool_distribution_element import PoolDistributionElement
 
 class PoolApi(BasePoolApi):
     async def get_pool(self) -> Pool:
-        return await get_container().pool_service.get_primary_pool_stat()
+        return await get_container().pool_service.get_cluster_pool_stat()
 
     async def get_node(
             self,

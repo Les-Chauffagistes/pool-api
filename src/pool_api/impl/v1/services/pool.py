@@ -84,6 +84,44 @@ class PoolService:
             shares=shares,
         )
 
+    async def get_cluster_pool_stat(self) -> Pool:
+        data = await self.pool_stat_dao.get_cluster_stat()
+        runtime = PoolRuntime(
+            runtime=data.runtime_s,
+            lastupdate=int(data.updated_at.timestamp()),
+            Users=data.users,
+            Workers=data.workers,
+            Idle=data.idle,
+            Disconnected=data.disconnected
+        )
+
+        hashrate = PoolHashrates(
+            hashrate1m=from_number_to_string(data.hashrate_1m),
+            hashrate5m=from_number_to_string(data.hashrate_5m),
+            hashrate15m=from_number_to_string(data.hashrate_15m),
+            hashrate1hr=from_number_to_string(data.hashrate_1h),
+            hashrate1d=from_number_to_string(data.hashrate_1d),
+            hashrate6hr=from_number_to_string(data.hashrate_6h),
+            hashrate7d=from_number_to_string(data.hashrate_7d),
+        )
+
+        shares = PoolShares(
+            diff=data.diff,
+            accepted=data.accepted,
+            rejected=data.rejected,
+            bestshare=data.bestshare,
+            SPS1m=data.sps_1m,
+            SPS5m=data.sps_5m,
+            SPS15m=data.sps_15m,
+            SPS1h=data.sps_1h,
+        )
+
+        return Pool(
+            runtime=runtime,
+            hashrates=hashrate,
+            shares=shares,
+        )
+
     async def get_primary_node_stat(self) -> Node:
         height = await self.prometheus.query_scalar("bitcoin_blocks")
         version = await self.prometheus.query_scalar("bitcoin_server_version")
