@@ -25,7 +25,7 @@ class FakeService:
     def __init__(self):
         self.not_found = False
 
-    async def get_primary_pool_stat(self):
+    async def get_cluster_pool_stat(self):
         return Pool(
             runtime=PoolRuntime(runtime=1, lastupdate=2, Users=3, Workers=4, Idle=5, Disconnected=6),
             hashrates=PoolHashrates(
