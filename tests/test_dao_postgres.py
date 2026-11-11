@@ -210,11 +210,11 @@ async def test_get_cluster_stat_aggregates_all_instances(pg):
     await seed_pool_stat(pg, "ckpool02", users=5, workers=7, idle=2, disconnected=1, hashrate_1m=5, hashrate_7d=1,
                          runtime_s=200, diff=3.5, accepted=50, rejected=3, bestshare=99, sps_1m=0.5)
     stat = await PoolStatDAO(pg).get_cluster_stat()
-    assert (stat.users, stat.workers, stat.idle, stat.disconnected) == (7, 10, 3, 1)  # sommes
+    assert (stat.workers, stat.idle, stat.disconnected) == (10, 3, 1)  # sommes
     assert (stat.accepted, stat.rejected) == (150, 5)
     assert (stat.hashrate_1m, stat.hashrate_7d) == (15, 71)
     assert stat.sps_1m == pytest.approx(0.6)
-    assert (stat.runtime_s, stat.diff, stat.bestshare) == (200, 3.5, 99)  # max
+    assert (stat.users, stat.runtime_s, stat.diff, stat.bestshare) == (5, 200, 3.5, 99)  # max
     assert stat.updated_at == T0
 
 
