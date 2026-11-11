@@ -76,7 +76,7 @@ class PoolStatDAO:
                    sum(hashrate_1d)  hashrate_1d,
                    sum(hashrate_7d)  hashrate_7d,
                    max(runtime_s)    runtime_s,
-                   sum(users)::bigint users,
+                   max(users)::bigint users,
                    sum(workers)::bigint workers,
                    sum(idle)::bigint idle,
                    sum(disconnected)::bigint disconnected,
