@@ -34,6 +34,9 @@ jobs:
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
+        env:
+          # Sub-agents start in the background by default and the headless session exits before they report back
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
