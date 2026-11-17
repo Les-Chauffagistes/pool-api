@@ -93,6 +93,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# /health (healthcheck Docker) n'est ni loggué ni tracé. Ajouté avant CORS : le dernier middleware ajouté
+# est le plus externe, et CORS doit l'être pour poser ses en-têtes sur toutes les réponses.
+app.add_middleware(RequestLoggingMiddleware, exclude_paths=["/health"])
+
 # API publique en lecture : toutes les origines sont autorisées. Pas de credentials (cookies/auth
 # HTTP), incompatibles avec le joker "*" côté navigateur.
 app.add_middleware(
@@ -101,9 +105,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Ajouté après CORS pour être le plus externe : /health (healthcheck Docker) n'est ni loggué ni tracé.
-app.add_middleware(RequestLoggingMiddleware, exclude_paths=["/health"])
 
 
 @app.exception_handler(NotFoundError)
