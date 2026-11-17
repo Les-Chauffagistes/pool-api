@@ -9,4 +9,5 @@ export HISTORY_DB_PASSWORD=$(cat /run/secrets/history_db_password)
 export HISTORY_DATABASE_URL="postgresql://${HISTORY_DB_USER}:${HISTORY_DB_PASSWORD}@${HISTORY_DB_HOST}:5432/${HISTORY_DB_NAME}"
 
 
-exec uvicorn pool_api.main:app --host 0.0.0.0 --port ${SERVER_PORT:-8000}
+# pas d'access log uvicorn : RequestLoggingMiddleware logge déjà chaque requête
+exec uvicorn pool_api.main:app --no-access-log --host 0.0.0.0 --port ${SERVER_PORT:-8000}
