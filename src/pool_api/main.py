@@ -5,13 +5,15 @@ from pool_api.dao.ShareWeight import ShareWeightDAO
 from pool_api.dao.PoolStat import PoolStatDAO
 from pool_api.dao.ShareLog import ShareLogDAO
 
-import logging
 import importlib
 import pkgutil
 from contextlib import asynccontextmanager
 import asyncpg
 import httpx
 
+from chauff_cmn.logging import configure
+from chauff_cmn.logging.asgi import RequestLoggingMiddleware
+from chauff_cmn.tracing import setup_tracing, shutdown_tracing
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -29,7 +31,9 @@ from pool_api.impl.v1.services.pool import PoolService
 from pool_api.impl.v1.services.share_hub import ShareHub
 from settings import settings
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+# intercept_stdlib : le code (et uvicorn, asyncpg...) logge via la stdlib, redirigée vers le JSON de chauff-cmn
+configure(service="pool-api", level=settings.log_level, intercept_stdlib=True)
+setup_tracing("pool-api")
 
 
 POOL_KWARGS = dict(
@@ -79,6 +83,7 @@ async def lifespan(_: FastAPI):
         await redis.close()
         await pg.close()
         await pg_history.close()
+        shutdown_tracing()
 
 
 app = FastAPI(
@@ -87,6 +92,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# /health (healthcheck Docker) n'est ni loggué ni tracé. Ajouté avant CORS : le dernier middleware ajouté
+# est le plus externe, et CORS doit l'être pour poser ses en-têtes sur toutes les réponses.
+app.add_middleware(RequestLoggingMiddleware, exclude_paths=["/health"])
 
 # API publique en lecture : toutes les origines sont autorisées. Pas de credentials (cookies/auth
 # HTTP), incompatibles avec le joker "*" côté navigateur.

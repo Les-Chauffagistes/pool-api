@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     history_database_url: str
     prometheus_url: str
     api_key: str
+    log_level: str = "INFO"
     redis_url: str = "redis://localhost:6379/0"
     ping_interval_s: float = 30
     share_stream_poll_interval_s: float = 0.5
