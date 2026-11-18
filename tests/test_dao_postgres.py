@@ -228,7 +228,7 @@ async def test_monthly_bests_keeps_the_best_row_per_month(pg):
         T0,
     )
     rows = await MonthlyBestsDAO(pg).get_monthly_bests()
-    assert [(r["month"], r["address"], r["sdiff"]) for r in rows] == [("2025-12", "dec", 2), ("2026-01", "high", 9)]
+    assert [(r["month"], r["address"], r["sdiff"]) for r in rows] == [("2025-12", "dec…ec", 2), ("2026-01", "high…gh", 9)]
     assert rows[0]["epoch"] == int(T0.timestamp())
 
 

@@ -653,3 +653,101 @@ components:
         - part
         - shares_ko
         - shares_ok
+    PoolDistributionAtElement:
+      type: object
+      description: >-
+        Part d'un worker dans la répartition d'une pool à une date donnée
+        (history-server, GET /v1/{address}/distribution?at=). Les parts sont des
+        fractions 0-1 dont la somme vaut 1.
+      properties:
+        workername:
+          type: string
+        part:
+          type: number
+          description: Fraction 0-1 du travail de la pool (somme = 1).
+        sampled_at:
+          type: string
+          description: Date ISO 8601 de l'échantillon utilisé (dernier échantillon <= at).
+      required:
+        - workername
+        - part
+        - sampled_at
+    PoolWebsocketShareElement:
+      type: object
+      properties:
+        type:
+          type: string
+          default: share
+        share_id:
+          type: string
+          example: debian:000ed6bd/6ab2eef0000145f3.sharelog:1923,
+        epoch:
+          type: integer
+          example: 1
+        seq:
+          type: integer
+          example: 20773258
+        instance:
+          type: string
+          example: debian
+          description: The instance name of the pool server where the share was submitted
+        created_at:
+          type: string
+          example: 2026-10-21T12:20:51.262066+00:00
+          format: date-time
+        workinfoid:
+          type: integer
+          example: 7688470228434503155
+        block_height:
+          type: integer
+          example: 972480
+        username:
+          type: string
+          description: The bitcoin address
+          example: bc1qqp9zq4an6nyzhcspz2xfmkcf8rj0p6w94a5gyeu2a7rghxjhnqqsvymz5m
+        workername:
+          type: string
+          description: The worker name, including the username
+          example: bc1qqp9zq4an6nyzhcspz2xfmkcf8rj0p6w94a5gyeu2a7rghxjhnqqsvymz5m.Heatman
+        diff:
+          type: number
+          example: 1000.0
+        sdiff:
+          type: number
+          example: 2026986.923313583316
+        result:
+          type: boolean
+          example: true
+          description: If the share is valid and accepted
+        parse_error:
+          type: boolean
+          example: false
+      required:
+        - type
+        - share_id
+        - epoch
+        - seq
+        - instance
+        - created_at
+        - workinfoid
+        - block_height
+        - username
+        - workername
+        - diff
+        - sdiff
+        - result
+        - parse_error
+    PoolWebsocketWatermarkElement:
+      type: object
+      properties:
+        type:
+          type: string
+          example: watermark
+          default: watermark
+        watermark:
+          type: string
+          format: date-time
+          example: 2026-10-21T12:20:51.262066+00:00
+      required:
+        - type
+        - watermark
